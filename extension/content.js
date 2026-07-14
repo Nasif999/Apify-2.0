@@ -285,6 +285,9 @@
   function onChange(e) {
     if (!active) return;
     const el = e.target;
+    // A free-text/combobox input (e.g. YouTube search, role="combobox") is owned
+    // by the input handler as text; don't also record its change as a dropdown.
+    if (isTextEntry(el)) return;
     const fieldType = ApifyClassify.classifyField(el);
     if (fieldType === 'dropdown' || fieldType === 'tickmark' || fieldType === 'calendar') {
       // Remember this change so the click echo (label/wrapper) can be suppressed.
