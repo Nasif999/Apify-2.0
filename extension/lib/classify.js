@@ -31,6 +31,8 @@
 
   function isCalendar(el) {
     const tag = el.tagName.toLowerCase();
+    // A native <select> is a dropdown regardless of any date words in its label.
+    if (tag === 'select') return false;
     if (tag === 'input' && DATE_TYPES.includes(typeOf(el))) return true;
     const hintSources = [
       el.className && typeof el.className === 'string' ? el.className : '',
@@ -55,6 +57,16 @@
     if (label && STEPPER_HINT.test(label)) return true;
     const text = (el.textContent || '').trim();
     if (text === '+' || text === '-' || text === '−' || text === '–') return true;
+
+    // Structural: an icon-only button in a counter group (two buttons flanking a
+    // number). Catches booking-style +/- steppers that carry no text or label.
+    const btn = el.closest && el.closest('button, [role="button"]');
+    if (btn && btn.parentElement) {
+      const buttons = btn.parentElement.querySelectorAll('button, [role="button"]');
+      if (buttons.length >= 2 && /\d/.test(btn.parentElement.textContent || '')) {
+        return true;
+      }
+    }
     return false;
   }
 

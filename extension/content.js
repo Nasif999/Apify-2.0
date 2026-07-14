@@ -47,7 +47,30 @@
     return '';
   }
 
+  // Input types that are not free-text entry.
+  const NON_TEXT_INPUT = [
+    'button', 'submit', 'reset', 'image', 'file', 'hidden',
+    'checkbox', 'radio', 'date', 'datetime-local', 'month', 'week', 'time', 'color', 'range',
+  ];
+
+  // True for elements the user types free text into — including autocomplete
+  // comboboxes (an <input type="text"> that also carries role="combobox").
+  function isTextEntry(el) {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'textarea') return true;
+    if (el.isContentEditable) return true;
+    if (tag === 'input') {
+      return !NON_TEXT_INPUT.includes((el.getAttribute('type') || '').toLowerCase());
+    }
+    return false;
+  }
+
+  // Only real field types carry a captured value; clicks on buttons/links do not
+  // (prevents dumping entire panel textContent as a "value").
+  const VALUE_FIELD_TYPES = ['text', 'dropdown', 'tickmark', 'calendar'];
+
   function valueOf(el, fieldType) {
+    if (!VALUE_FIELD_TYPES.includes(fieldType)) return '';
     if (fieldType === 'tickmark') return !!el.checked;
     if (fieldType === 'dropdown' && el.tagName === 'SELECT') {
       const opt = el.selectedOptions && el.selectedOptions[0];
@@ -116,8 +139,9 @@
   function onInput(e) {
     if (!active) return;
     const el = e.target;
-    const fieldType = ApifyClassify.classifyField(el);
-    if (fieldType === 'text') record(el, 'input', 'text');
+    // Record any free-text entry as text, even if the element also classifies as
+    // a dropdown (autocomplete comboboxes) — we want the typed value.
+    if (isTextEntry(el)) record(el, 'input', 'text');
   }
 
   function onChange(e) {

@@ -91,3 +91,24 @@ test('tickmark takes precedence over text for a checkbox', () => {
   // a checkbox is an <input>; must not be misread as text
   assert.strictEqual(classifyField(el('<input type="checkbox" class="form-control">')), 'tickmark');
 });
+
+test('a <select> is always dropdown, even with a date-ish label', () => {
+  // regression: booking child-age <select> labelled "Age of child at check-out"
+  // was misread as calendar because of the "check-out" hint.
+  const doc = makeDom('<select name="age" aria-label="Age of child at check-out"><option>8</option></select>');
+  assert.strictEqual(classifyField(doc.querySelector('select')), 'dropdown');
+});
+
+test('structural stepper: a button flanking a number in a counter group', () => {
+  // booking occupancy +/- buttons: SVG icons, no +/- text, no aria-label.
+  const doc = makeDom(
+    '<div class="counter"><button class="dec"></button><span>2</span><button class="inc"></button></div>'
+  );
+  const incButton = doc.querySelector('button.inc');
+  assert.strictEqual(classifyField(incButton), 'stepper');
+});
+
+test('a lone button next to text that is not a counter is not a stepper', () => {
+  const doc = makeDom('<div><span>Results</span><button>Search</button></div>');
+  assert.strictEqual(classifyField(doc.querySelector('button')), 'unknown');
+});
