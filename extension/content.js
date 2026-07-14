@@ -92,15 +92,17 @@
       url: location.href,
     };
 
-    // Nested detection: a new field touched shortly after a stepper click,
-    // whose selector wasn't seen before that click, is a revealed sub-field.
+    // Nested detection: a real FIELD (not a button/action) touched shortly after
+    // a stepper click, whose selector wasn't seen before that click, is a revealed
+    // sub-field. Restricting to field types avoids linking unrelated buttons
+    // (e.g. the Search submit) that merely happen to be clicked within the window.
     const now = Date.now();
     const isNewField = !seenSelectors.has(selector);
     if (
       pendingStepperId != null &&
       isNewField &&
       now - pendingStepperAt < NESTED_WINDOW_MS &&
-      fieldType !== 'stepper'
+      VALUE_FIELD_TYPES.includes(fieldType)
     ) {
       action.revealedBy = pendingStepperId;
       pendingStepperId = null;
@@ -124,15 +126,34 @@
     );
   }
 
+  const INTERACTIVE_ROLES = ['button', 'link', 'tab', 'menuitem', 'menuitemcheckbox', 'option'];
+
+  // A genuinely clickable control worth recording as an action — as opposed to a
+  // plain container (a div/section with a data-testid) that a click merely bubbled
+  // through. Steppers are handled separately and always recorded.
+  function isInteractive(el) {
+    const tag = el.tagName.toLowerCase();
+    if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'select' || tag === 'textarea') {
+      return true;
+    }
+    const role = (el.getAttribute('role') || '').toLowerCase();
+    if (INTERACTIVE_ROLES.includes(role)) return true;
+    if (el.isContentEditable) return true;
+    return false;
+  }
+
   function onClick(e) {
     if (!active) return;
     const el = resolveControl(e.target);
     if (!el) return;
     const fieldType = ApifyClassify.classifyField(el);
-    // Fields that fire input/change are captured by those handlers; only record
-    // clicks for steppers and non-field controls (buttons, links, navigation).
-    if (fieldType === 'stepper' || fieldType === 'unknown') {
-      record(el, 'click', fieldType);
+    // Fields that fire input/change are captured by those handlers. Record clicks
+    // only for steppers and for genuinely interactive controls (buttons/links);
+    // skip clicks that merely bubbled through a non-interactive container.
+    if (fieldType === 'stepper') {
+      record(el, 'click', 'stepper');
+    } else if (fieldType === 'unknown' && isInteractive(el)) {
+      record(el, 'click', 'unknown');
     }
   }
 
