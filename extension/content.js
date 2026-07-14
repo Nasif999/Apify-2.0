@@ -35,22 +35,65 @@
     }, 250);
   }
 
+  const MAX_LABEL = 100;
+
+  function clean(s) {
+    return s ? s.replace(/\s+/g, ' ').trim() : '';
+  }
+
+  // Resolve the text referenced by aria-labelledby (space-separated id list).
+  function labelledByText(el) {
+    const ids = el.getAttribute('aria-labelledby');
+    if (!ids) return '';
+    return clean(
+      ids
+        .split(/\s+/)
+        .map((id) => {
+          const ref = document.getElementById(id);
+          return ref ? ref.textContent : '';
+        })
+        .join(' ')
+    );
+  }
+
+  // A human-readable name for whatever was clicked, tried in order of reliability.
+  // Ends with the element's own visible text so every click gets a name even when
+  // there is no aria-label/label (e.g. an autocomplete suggestion like
+  // "Dhaka, Bangladesh" or a "Search" button).
   function getLabel(el) {
-    const aria = el.getAttribute('aria-label');
-    if (aria) return aria.trim();
-    if (el.labels && el.labels.length) return el.labels[0].textContent.trim();
+    const aria = clean(el.getAttribute('aria-label'));
+    if (aria) return aria;
+
+    const byId = labelledByText(el);
+    if (byId) return byId.slice(0, MAX_LABEL);
+
+    if (el.labels && el.labels.length) return clean(el.labels[0].textContent).slice(0, MAX_LABEL);
     if (el.id) {
       const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (lbl) return lbl.textContent.trim();
+      if (lbl) return clean(lbl.textContent).slice(0, MAX_LABEL);
     }
     const wrap = el.closest && el.closest('label');
-    if (wrap) return wrap.textContent.trim();
-    const ph = el.getAttribute('placeholder');
-    if (ph) return ph.trim();
-    const name = el.getAttribute('name');
-    if (name) return name.trim();
-    const title = el.getAttribute('title');
-    if (title) return title.trim();
+    if (wrap) return clean(wrap.textContent).slice(0, MAX_LABEL);
+
+    const title = clean(el.getAttribute('title'));
+    if (title) return title;
+
+    // Visible text of the element itself (innerText respects visibility when
+    // available; textContent is the jsdom/test fallback).
+    const text = clean(el.innerText || el.textContent);
+    if (text) return text.slice(0, MAX_LABEL);
+
+    // Icon-only control: fall back to an inner image's alt text.
+    const img = el.querySelector && el.querySelector('img[alt]');
+    if (img) {
+      const alt = clean(img.getAttribute('alt'));
+      if (alt) return alt;
+    }
+
+    const ph = clean(el.getAttribute('placeholder'));
+    if (ph) return ph;
+    const name = clean(el.getAttribute('name'));
+    if (name) return name;
     return '';
   }
 
