@@ -21,6 +21,13 @@
   let pendingStepperAt = 0;
   const NESTED_WINDOW_MS = 15000;
 
+  // Autocomplete pairing: remember the last text typed so a suggestion click that
+  // follows it can be linked back (type "Dhaka" -> pick "Dhaka, Bangladesh").
+  let lastTextId = null;
+  let lastTextAt = 0;
+  let lastTextSelector = '';
+  const AUTOCOMPLETE_WINDOW_MS = 15000;
+
   function persist() {
     if (writeTimer) clearTimeout(writeTimer);
     writeTimer = setTimeout(() => {
@@ -117,11 +124,32 @@
       pendingStepperId = null;
     }
 
+    // Autocomplete pairing: a suggestion click (an unknown click carrying short
+    // text) shortly after typing into a different field is the pick for that text.
+    // Both steps are kept; the click links back via forTextId so replay can type
+    // the text and then select the matching suggestion.
+    if (
+      fieldType === 'unknown' &&
+      action.value &&
+      lastTextId != null &&
+      now - lastTextAt < AUTOCOMPLETE_WINDOW_MS &&
+      selector !== lastTextSelector
+    ) {
+      action.autocomplete = true;
+      action.forTextId = lastTextId;
+      lastTextId = null;
+    }
+
     const stored = ApifyRecorder.addAction(rec, action, now);
     seenSelectors.add(selector);
     if (fieldType === 'stepper') {
       pendingStepperId = stored.id;
       pendingStepperAt = now;
+    }
+    if (fieldType === 'text') {
+      lastTextId = stored.id;
+      lastTextAt = now;
+      lastTextSelector = selector;
     }
     persist();
   }
