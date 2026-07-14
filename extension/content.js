@@ -151,16 +151,26 @@
     return false;
   }
 
+  const DATE_INPUT_TYPES = ['date', 'datetime-local', 'month', 'week'];
+
+  function isNativeDateInput(el) {
+    return el.tagName === 'INPUT' && DATE_INPUT_TYPES.includes((el.getAttribute('type') || '').toLowerCase());
+  }
+
   function onClick(e) {
     if (!active) return;
     const el = resolveControl(e.target);
     if (!el) return;
     const fieldType = ApifyClassify.classifyField(el);
     // Fields that fire input/change are captured by those handlers. Record clicks
-    // only for steppers and for genuinely interactive controls (buttons/links);
-    // skip clicks that merely bubbled through a non-interactive container.
+    // only for steppers, custom (non-native) calendar fields, and genuinely
+    // interactive controls; skip clicks that merely bubbled through a container.
     if (fieldType === 'stepper') {
       record(el, 'click', 'stepper');
+    } else if (fieldType === 'calendar' && !isNativeDateInput(el)) {
+      // Custom date-picker field (a div/button that opens a calendar). Native
+      // <input type=date> is captured by onChange instead, to avoid double records.
+      record(el, 'click', 'calendar');
     } else if (fieldType === 'unknown' && isInteractive(el)) {
       record(el, 'click', 'unknown');
     }
