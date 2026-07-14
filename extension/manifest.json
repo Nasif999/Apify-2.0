@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Apify Recorder",
+  "version": "0.1.0",
+  "description": "Record a browser task once; Apify classifies its fields (calendar, dropdown, tickmark, stepper, nested) and exports a reusable recording.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Apify Recorder"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["lib/selector.js", "lib/classify.js", "lib/recorder.js", "content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

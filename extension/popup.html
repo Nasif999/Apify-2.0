@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <style>
+    :root { --bg:#0f1115; --fg:#e7e9ee; --muted:#9aa3b2; --accent:#5b8cff; --danger:#ff5b6e; --line:#232733; }
+    * { box-sizing: border-box; }
+    body { width: 320px; margin: 0; font: 13px/1.4 system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+    header { padding: 12px 14px; border-bottom: 1px solid var(--line); display:flex; align-items:center; gap:8px; }
+    header .dot { width:8px; height:8px; border-radius:50%; background:var(--muted); }
+    header .dot.on { background:#33d17a; box-shadow:0 0 8px #33d17a; }
+    h1 { font-size: 14px; margin: 0; font-weight: 600; }
+    .status { color: var(--muted); font-size: 12px; margin-left:auto; }
+    .body { padding: 12px 14px; }
+    .row { display:flex; gap:8px; margin-bottom:10px; }
+    button { flex:1; padding:9px 10px; border:1px solid var(--line); border-radius:8px; background:#151924; color:var(--fg); cursor:pointer; font-size:13px; }
+    button:hover { border-color:#39415a; }
+    button.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    button.stop { background:var(--danger); border-color:var(--danger); color:#fff; }
+    button:disabled { opacity:.45; cursor:not-allowed; }
+    .stats { display:flex; gap:12px; margin: 6px 0 12px; color:var(--muted); font-size:12px; }
+    .stats b { color:var(--fg); }
+    .vars { max-height: 180px; overflow:auto; border:1px solid var(--line); border-radius:8px; padding:8px; background:#0b0d12; }
+    .vars:empty::after { content:"No fields captured yet."; color:var(--muted); }
+    .var { display:flex; align-items:center; gap:8px; padding:4px 0; border-bottom:1px dashed var(--line); }
+    .var:last-child { border-bottom:0; }
+    .tag { font-size:10px; padding:1px 6px; border-radius:6px; background:#1b2233; color:var(--accent); text-transform:uppercase; letter-spacing:.03em; }
+    .tag.nested { background:#2a1b33; color:#c48cff; }
+    .vname { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .vval { color:var(--muted); max-width:110px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    footer { padding: 10px 14px; border-top:1px solid var(--line); }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="dot" id="dot"></span>
+    <h1>Apify Recorder</h1>
+    <span class="status" id="status">idle</span>
+  </header>
+  <div class="body">
+    <div class="row">
+      <button class="primary" id="start">● Record</button>
+      <button class="stop" id="stop" disabled>■ Stop</button>
+    </div>
+    <div class="stats">
+      <span>Steps: <b id="stepCount">0</b></span>
+      <span>Fields: <b id="varCount">0</b></span>
+      <span>Sites: <b id="siteCount">0</b></span>
+    </div>
+    <div class="vars" id="vars"></div>
+  </div>
+  <footer>
+    <div class="row" style="margin:0">
+      <button id="copy">Copy JSON</button>
+      <button id="export">Export JSON</button>
+    </div>
+  </footer>
+  <script src="lib/recorder.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
