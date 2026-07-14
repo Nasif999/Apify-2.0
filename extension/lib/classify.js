@@ -12,7 +12,12 @@
 // Dual-usable: attaches to window (content script) and exports for node tests.
 (function (global) {
   const DATE_TYPES = ['date', 'datetime-local', 'month', 'week'];
-  const DATE_HINT = /(datepicker|calendar|check-?in|check-?out|departure|return|\bdate\b)/i;
+  // Strong signals (class/id of a date-picker widget) — trusted even on inputs,
+  // so jQuery-UI style <input class="hasDatepicker"> is caught.
+  const DATE_STRONG = /(datepicker|hasdatepicker|calendar)/i;
+  // Weak signals (a date word in a label) — only trusted on non-input widgets,
+  // so a free-text input merely labelled "…date" is NOT misread as a calendar.
+  const DATE_WEAK = /(check-?in|check-?out|departure|\bdate\b)/i;
   const STEPPER_HINT = /(increase|decrease|increment|decrement|plus|minus|\badd\b|\bremove\b|\bmore\b|\bfewer\b)/i;
 
   function typeOf(el) {
@@ -33,14 +38,19 @@
     const tag = el.tagName.toLowerCase();
     // A native <select> is a dropdown regardless of any date words in its label.
     if (tag === 'select') return false;
-    if (tag === 'input' && DATE_TYPES.includes(typeOf(el))) return true;
-    const hintSources = [
-      el.className && typeof el.className === 'string' ? el.className : '',
-      el.id || '',
+    const classId = `${el.className && typeof el.className === 'string' ? el.className : ''} ${el.id || ''}`;
+    if (tag === 'input') {
+      // Inputs: only a native date type or a strong date-picker class/id.
+      // A weak label word alone ("Return date") must not win here.
+      return DATE_TYPES.includes(typeOf(el)) || DATE_STRONG.test(classId);
+    }
+    // Non-input widgets (divs/buttons that open a calendar): strong or weak hints.
+    const sources = [
+      classId,
       el.getAttribute('aria-label') || '',
       el.getAttribute('placeholder') || '',
     ].join(' ');
-    return DATE_HINT.test(hintSources);
+    return DATE_STRONG.test(sources) || DATE_WEAK.test(sources);
   }
 
   function isDropdown(el) {
@@ -93,7 +103,7 @@
     return 'unknown';
   }
 
-  const api = { classifyField };
+  const api = { classifyField, DATE_TYPES };
   if (global) global.ApifyClassify = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

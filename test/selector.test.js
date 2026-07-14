@@ -57,3 +57,10 @@ test('generated selector actually resolves back to the element', () => {
   const sel = generateSelector(el);
   assert.strictEqual(doc.querySelector(sel), el);
 });
+
+test('an attribute value containing a quote is escaped and still resolves', () => {
+  const doc = makeDom('<input name=\'a"b\'>');
+  const el = doc.querySelector('input');
+  const sel = generateSelector(el);
+  assert.strictEqual(doc.querySelector(sel), el);
+});

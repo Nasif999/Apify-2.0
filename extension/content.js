@@ -97,11 +97,12 @@
     return '';
   }
 
-  // Input types that are not free-text entry.
+  // Input types that are not free-text entry. Date types are sourced from the
+  // classifier so the list has a single definition (no drift).
   const NON_TEXT_INPUT = [
     'button', 'submit', 'reset', 'image', 'file', 'hidden',
-    'checkbox', 'radio', 'date', 'datetime-local', 'month', 'week', 'time', 'color', 'range',
-  ];
+    'checkbox', 'radio', 'time', 'color', 'range',
+  ].concat(ApifyClassify.DATE_TYPES);
 
   // True for elements the user types free text into — including autocomplete
   // comboboxes (an <input type="text"> that also carries role="combobox").
@@ -122,7 +123,7 @@
   // autocomplete pick) without dumping an entire panel's text.
   const MAX_CLICK_VALUE = 80;
 
-  function valueOf(el, fieldType) {
+  function captureFieldValue(el, fieldType) {
     if (fieldType === 'tickmark') return !!el.checked;
     if (fieldType === 'dropdown' && el.tagName === 'SELECT') {
       const opt = el.selectedOptions && el.selectedOptions[0];
@@ -146,7 +147,7 @@
       type,
       fieldType,
       selector,
-      value: valueOf(el, fieldType),
+      value: captureFieldValue(el, fieldType),
       label: getLabel(el),
       url: location.href,
     };
@@ -232,10 +233,8 @@
     return false;
   }
 
-  const DATE_INPUT_TYPES = ['date', 'datetime-local', 'month', 'week'];
-
   function isNativeDateInput(el) {
-    return el.tagName === 'INPUT' && DATE_INPUT_TYPES.includes((el.getAttribute('type') || '').toLowerCase());
+    return el.tagName === 'INPUT' && ApifyClassify.DATE_TYPES.includes((el.getAttribute('type') || '').toLowerCase());
   }
 
   // Suppress a click that is redundant with a form change from the same gesture

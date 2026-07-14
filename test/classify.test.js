@@ -112,3 +112,14 @@ test('a lone button next to text that is not a counter is not a stepper', () => 
   const doc = makeDom('<div><span>Results</span><button>Search</button></div>');
   assert.strictEqual(classifyField(doc.querySelector('button')), 'unknown');
 });
+
+test('a free-text input merely labelled with a date word is text, not calendar', () => {
+  // regression: DATE_HINT used to match any "date"/"return"/"departure" label,
+  // misreading a plain text input as a calendar.
+  assert.strictEqual(classifyField(el('<input type="text" aria-label="Return date">')), 'text');
+  assert.strictEqual(classifyField(el('<input type="text" placeholder="Departure">')), 'text');
+});
+
+test('a non-input date-picker widget with a date label is calendar', () => {
+  assert.strictEqual(classifyField(el('<div aria-label="Departure date"></div>')), 'calendar');
+});

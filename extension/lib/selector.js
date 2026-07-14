@@ -11,6 +11,18 @@
 (function (global) {
   const TEST_HOOK_ATTRS = ['data-testid', 'data-test-id', 'data-test', 'data-cy', 'data-qa'];
 
+  // Escape an id for use in a #id selector. Uses the browser's CSS.escape when
+  // available (content script); falls back to a safe regex in node/jsdom tests.
+  function escId(s) {
+    if (typeof CSS !== 'undefined' && CSS.escape) return CSS.escape(s);
+    return String(s).replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+  }
+
+  // Escape a value placed inside a double-quoted attribute selector [a="value"].
+  function escAttr(s) {
+    return String(s).replace(/["\\]/g, '\\$&');
+  }
+
   // Auto-generated ids (ember1234, radix :r1:, 4+ digit runs) are unstable across renders.
   function isStableId(id) {
     if (!id) return false;
@@ -34,14 +46,14 @@
   function testHookOf(el) {
     for (const attr of TEST_HOOK_ATTRS) {
       const v = el.getAttribute(attr);
-      if (v) return `[${attr}="${v}"]`;
+      if (v) return `[${attr}="${escAttr(v)}"]`;
     }
     return null;
   }
 
   // A selector that reliably re-finds this element on its own, or null.
   function stableAnchor(el) {
-    if (isStableId(el.id)) return `#${el.id}`;
+    if (isStableId(el.id)) return `#${escId(el.id)}`;
     return testHookOf(el);
   }
 
@@ -60,7 +72,7 @@
     if (!el || el.nodeType !== 1) return null;
 
     // 1. stable id
-    if (isStableId(el.id)) return `#${el.id}`;
+    if (isStableId(el.id)) return `#${escId(el.id)}`;
 
     // 2. test-hook attribute
     const hook = testHookOf(el);
@@ -70,11 +82,11 @@
 
     // 3. name attribute
     const name = el.getAttribute('name');
-    if (name) return `${tag}[name="${name}"]`;
+    if (name) return `${tag}[name="${escAttr(name)}"]`;
 
     // 4. aria-label
     const aria = el.getAttribute('aria-label');
-    if (aria) return `${tag}[aria-label="${aria}"]`;
+    if (aria) return `${tag}[aria-label="${escAttr(aria)}"]`;
 
     // 5. stable class combo
     const classes = Array.from(el.classList).filter(isStableClass);
