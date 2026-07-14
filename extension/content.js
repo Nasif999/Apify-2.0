@@ -163,19 +163,29 @@
     );
   }
 
-  const INTERACTIVE_ROLES = ['button', 'link', 'tab', 'menuitem', 'menuitemcheckbox', 'option'];
+  const INTERACTIVE_TAGS = ['button', 'a', 'input', 'select', 'textarea', 'summary', 'label', 'option'];
+  // Broad set of ARIA roles a user can act on — includes grid/menu/tree cells that
+  // custom widgets (e.g. calendar date cells) use.
+  const INTERACTIVE_ROLES = [
+    'button', 'link', 'tab', 'menuitem', 'menuitemcheckbox', 'menuitemradio',
+    'option', 'checkbox', 'radio', 'switch', 'gridcell', 'treeitem', 'row', 'cell',
+  ];
 
-  // A genuinely clickable control worth recording as an action — as opposed to a
-  // plain container (a div/section with a data-testid) that a click merely bubbled
-  // through. Steppers are handled separately and always recorded.
+  // Universal clickability test — works on any site without a per-site tag list.
+  // The decisive signal is the browser's own computed cursor: a custom <div> that
+  // the site made clickable (a date field, a date cell) renders cursor:pointer.
   function isInteractive(el) {
     const tag = el.tagName.toLowerCase();
-    if (tag === 'button' || tag === 'a' || tag === 'input' || tag === 'select' || tag === 'textarea') {
-      return true;
-    }
+    if (INTERACTIVE_TAGS.includes(tag)) return true;
     const role = (el.getAttribute('role') || '').toLowerCase();
     if (INTERACTIVE_ROLES.includes(role)) return true;
     if (el.isContentEditable) return true;
+    if (el.hasAttribute('onclick')) return true;
+    const ti = el.getAttribute('tabindex');
+    if (ti != null && ti !== '-1') return true;
+    try {
+      if (window.getComputedStyle(el).cursor === 'pointer') return true;
+    } catch (_) {}
     return false;
   }
 
@@ -185,21 +195,38 @@
     return el.tagName === 'INPUT' && DATE_INPUT_TYPES.includes((el.getAttribute('type') || '').toLowerCase());
   }
 
+  // Suppress a click that is redundant with a form change from the same gesture
+  // (e.g. clicking a checkbox's label fires both a change on the input and a click
+  // on the wrapping label). A standalone click that opens a widget — a date field,
+  // a date cell — has no accompanying change and is always kept.
+  let lastChangeEl = null;
+  let lastChangeAt = 0;
+  const CHANGE_ECHO_MS = 600;
+
+  function isRedundantWithChange(el) {
+    if (!lastChangeEl) return false;
+    if (Date.now() - lastChangeAt > CHANGE_ECHO_MS) return false;
+    return el === lastChangeEl || el.contains(lastChangeEl) || lastChangeEl.contains(el);
+  }
+
   function onClick(e) {
     if (!active) return;
     const el = resolveControl(e.target);
     if (!el) return;
     const fieldType = ApifyClassify.classifyField(el);
-    // Fields that fire input/change are captured by those handlers. Record clicks
-    // only for steppers, custom (non-native) calendar fields, and genuinely
-    // interactive controls; skip clicks that merely bubbled through a container.
+
+    // dropdown/tickmark/text are captured by the input/change handlers; skip their
+    // clicks to avoid duplicates.
+    if (fieldType === 'dropdown' || fieldType === 'tickmark' || fieldType === 'text') return;
+    if (isRedundantWithChange(el)) return;
+
     if (fieldType === 'stepper') {
       record(el, 'click', 'stepper');
     } else if (fieldType === 'calendar' && !isNativeDateInput(el)) {
-      // Custom date-picker field (a div/button that opens a calendar). Native
-      // <input type=date> is captured by onChange instead, to avoid double records.
+      // Custom date-picker field/cell (a div/button that opens or is in a calendar).
       record(el, 'click', 'calendar');
-    } else if (fieldType === 'unknown' && isInteractive(el)) {
+    } else if (isInteractive(el)) {
+      // Any other clickable control on any site (custom date cells, cards, etc.).
       record(el, 'click', 'unknown');
     }
   }
@@ -217,6 +244,9 @@
     const el = e.target;
     const fieldType = ApifyClassify.classifyField(el);
     if (fieldType === 'dropdown' || fieldType === 'tickmark' || fieldType === 'calendar') {
+      // Remember this change so the click echo (label/wrapper) can be suppressed.
+      lastChangeEl = el;
+      lastChangeAt = Date.now();
       record(el, 'change', fieldType);
     }
   }
