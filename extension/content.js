@@ -65,19 +65,28 @@
     return false;
   }
 
-  // Only real field types carry a captured value; clicks on buttons/links do not
-  // (prevents dumping entire panel textContent as a "value").
+  // Field types whose value comes from a form control.
   const VALUE_FIELD_TYPES = ['text', 'dropdown', 'tickmark', 'calendar'];
+  // A suggestion/option label is short; a container's textContent is huge. Cap the
+  // value captured from an unknown click so we grab "New Delhi, India" (an
+  // autocomplete pick) without dumping an entire panel's text.
+  const MAX_CLICK_VALUE = 80;
 
   function valueOf(el, fieldType) {
-    if (!VALUE_FIELD_TYPES.includes(fieldType)) return '';
     if (fieldType === 'tickmark') return !!el.checked;
     if (fieldType === 'dropdown' && el.tagName === 'SELECT') {
       const opt = el.selectedOptions && el.selectedOptions[0];
       return opt ? opt.textContent.trim() : el.value;
     }
-    if (el.isContentEditable) return el.textContent;
-    return el.value != null ? el.value : el.textContent;
+    if (fieldType === 'text' || fieldType === 'calendar') {
+      if (el.isContentEditable) return el.textContent;
+      return el.value != null ? el.value : el.textContent;
+    }
+    if (fieldType === 'unknown') {
+      const t = (el.textContent || '').trim();
+      return t.length && t.length <= MAX_CLICK_VALUE ? t : '';
+    }
+    return ''; // stepper and anything else: no meaningful value
   }
 
   function record(el, type, fieldType) {
