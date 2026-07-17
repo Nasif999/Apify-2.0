@@ -251,16 +251,12 @@
     return el === lastChangeEl || el.contains(lastChangeEl) || lastChangeEl.contains(el);
   }
 
-  function onClick(e) {
-    if (!active) return;
-    const el = resolveControl(e.target);
-    if (!el) return;
+  // Record a click on a resolved element. Returns true if something was recorded.
+  function recordClick(el) {
     const fieldType = ApifyClassify.classifyField(el);
-
-    // dropdown/tickmark/text are captured by the input/change handlers; skip their
-    // clicks to avoid duplicates.
-    if (fieldType === 'dropdown' || fieldType === 'tickmark' || fieldType === 'text') return;
-    if (isRedundantWithChange(el)) return;
+    // dropdown/tickmark/text are captured by the input/change handlers.
+    if (fieldType === 'dropdown' || fieldType === 'tickmark' || fieldType === 'text') return false;
+    if (isRedundantWithChange(el)) return false;
 
     if (fieldType === 'stepper') {
       record(el, 'click', 'stepper');
@@ -270,7 +266,47 @@
     } else if (isInteractive(el)) {
       // Any other clickable control on any site (custom date cells, cards, etc.).
       record(el, 'click', 'unknown');
+    } else {
+      return false;
     }
+    return true;
+  }
+
+  // Some custom widgets (date pickers, menus) commit on pointerdown and cancel the
+  // click, so a click listener never fires. We defer the pointerdown briefly: if a
+  // real click follows (normal button) onClick cancels it and records once; if no
+  // click arrives (a click-suppressing widget) the deferred record fires.
+  let pendingPointerTimer = null;
+  const POINTER_DEFER_MS = 350;
+
+  function cancelPendingPointer() {
+    if (pendingPointerTimer) {
+      clearTimeout(pendingPointerTimer);
+      pendingPointerTimer = null;
+    }
+  }
+
+  function onPointerDown(e) {
+    if (!active) return;
+    const el = resolveControl(e.target);
+    if (!el) return;
+    const fieldType = ApifyClassify.classifyField(el);
+    // Only defer for click-like controls that a click handler would record anyway.
+    if (fieldType !== 'stepper' && fieldType !== 'calendar' && !isInteractive(el)) return;
+    cancelPendingPointer();
+    pendingPointerTimer = setTimeout(() => {
+      pendingPointerTimer = null;
+      recordClick(el);
+    }, POINTER_DEFER_MS);
+  }
+
+  function onClick(e) {
+    if (!active) return;
+    // A real click fired — cancel any deferred pointerdown so we record only once.
+    cancelPendingPointer();
+    const el = resolveControl(e.target);
+    if (!el) return;
+    recordClick(el);
   }
 
   function onInput(e) {
@@ -297,12 +333,14 @@
   }
 
   function attach() {
+    document.addEventListener('pointerdown', onPointerDown, true);
     document.addEventListener('click', onClick, true);
     document.addEventListener('input', onInput, true);
     document.addEventListener('change', onChange, true);
   }
 
   function detach() {
+    document.removeEventListener('pointerdown', onPointerDown, true);
     document.removeEventListener('click', onClick, true);
     document.removeEventListener('input', onInput, true);
     document.removeEventListener('change', onChange, true);
