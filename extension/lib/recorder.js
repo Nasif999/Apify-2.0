@@ -50,6 +50,26 @@
     return out;
   }
 
+  // Parse the query string of the final step's URL into a plain object. On
+  // URL-driven sites the last page URL encodes the whole search state (dates,
+  // guests, destination), so these params are a robust, site-agnostic variable
+  // source — and exactly what replay would set. Repeated keys become arrays.
+  function urlParamsOf(steps) {
+    if (!steps.length) return {};
+    const last = steps[steps.length - 1].url;
+    const out = {};
+    try {
+      const params = new URL(last).searchParams;
+      for (const [k, v] of params) {
+        if (k in out) out[k] = [].concat(out[k], v);
+        else out[k] = v;
+      }
+    } catch {
+      return {};
+    }
+    return out;
+  }
+
   function distinctSites(steps) {
     const seen = [];
     for (const s of steps) {
@@ -100,6 +120,7 @@
       sites: distinctSites(steps),
       steps,
       variables: extractVariables(steps),
+      urlParams: urlParamsOf(steps),
     };
   }
 

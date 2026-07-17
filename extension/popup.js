@@ -20,11 +20,12 @@ function render(rec, active) {
 
   const out = rec && rec.actions && rec.actions.length
     ? ApifyRecorder.serialize(rec)
-    : { steps: [], variables: [], sites: [] };
+    : { steps: [], variables: [], sites: [], urlParams: {} };
 
   $('stepCount').textContent = out.steps.length;
   $('varCount').textContent = out.variables.length;
   $('siteCount').textContent = out.sites.length;
+  $('paramCount').textContent = Object.keys(out.urlParams || {}).length;
 
   const vars = $('vars');
   vars.innerHTML = '';

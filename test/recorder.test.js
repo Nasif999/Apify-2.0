@@ -65,6 +65,29 @@ test('variable name falls back to fieldType + ordinal when no label', () => {
   assert.strictEqual(out.variables[0].name, 'dropdown_1');
 });
 
+test('serialize extracts query params from the final URL', () => {
+  const rec = newRecording(0);
+  addAction(rec, { type: 'input', fieldType: 'text', selector: '#q', value: 'x', url: 'https://a.com/s?ss=KL' }, 1);
+  addAction(rec, { type: 'change', fieldType: 'tickmark', selector: '#f', value: true, url: 'https://a.com/results?ss=Kuala+Lumpur&checkin=2026-07-19&checkout=2026-08-18' }, 2);
+  const out = serialize(rec);
+  assert.strictEqual(out.urlParams.checkin, '2026-07-19');
+  assert.strictEqual(out.urlParams.checkout, '2026-08-18');
+  assert.strictEqual(out.urlParams.ss, 'Kuala Lumpur');
+});
+
+test('serialize collects repeated query params into an array', () => {
+  const rec = newRecording(0);
+  addAction(rec, { type: 'change', fieldType: 'dropdown', selector: '#age', value: '4', url: 'https://a.com/r?age=16&age=12&age=4' }, 1);
+  const out = serialize(rec);
+  assert.deepStrictEqual(out.urlParams.age, ['16', '12', '4']);
+});
+
+test('serialize gives empty urlParams when there are no steps', () => {
+  const rec = newRecording(0);
+  const out = serialize(rec);
+  assert.deepStrictEqual(out.urlParams, {});
+});
+
 test('nested: a field revealed by a stepper links to its parent', () => {
   const rec = newRecording(0);
   const stepper = addAction(rec, { type: 'click', fieldType: 'stepper', selector: '#add-child', url: U }, 1);
