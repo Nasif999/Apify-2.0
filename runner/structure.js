@@ -92,7 +92,9 @@ async function structureResults(cards, opts = {}) {
   const key = process.env.DEEPSEEK_API_KEY;
   let items;
   let engine;
-  if (key) {
+  // Heuristic is the default (free, no API). DeepSeek is opt-in via opts.ai and
+  // only used when a key is present; it falls back to heuristic on failure.
+  if (opts.ai && key) {
     try {
       items = await callDeepSeek(cards, key, opts);
       engine = 'deepseek';
@@ -102,7 +104,7 @@ async function structureResults(cards, opts = {}) {
     }
   } else {
     items = heuristicParse(cards);
-    engine = 'heuristic (no DEEPSEEK_API_KEY)';
+    engine = opts.ai ? 'heuristic (no DEEPSEEK_API_KEY)' : 'heuristic';
   }
   return { results: normalizeResults(items), engine };
 }

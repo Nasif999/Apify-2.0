@@ -12,6 +12,7 @@ const { chromium } = require('playwright');
 const { buildReplayUrl, isUrlDriven } = require('../extension/lib/replay');
 const { scrapeCards } = require('./scrape');
 const { structureResults } = require('./structure');
+const { dismissPopups } = require('./popups');
 
 function finalUrl(recording) {
   const steps = (recording && recording.steps) || [];
@@ -64,7 +65,11 @@ async function stepReplay(page, recording, newValues, opts) {
       await page.goto(step.url, { waitUntil: 'domcontentloaded', timeout: 60000 });
       lastUrl = step.url;
     }
-    const value = step.selector in newValues ? newValues[step.selector] : step.value;
+    // Override by step id (clean key, safe for --set) or by selector (programmatic).
+    const idKey = String(step.id);
+    let value = step.value;
+    if (idKey in newValues) value = newValues[idKey];
+    else if (step.selector in newValues) value = newValues[step.selector];
     try {
       await applyStep(page, step, value);
       log.push({ id: step.id, selector: step.selector, ok: true });
@@ -100,7 +105,7 @@ async function replay(recording, newValues = {}, opts = {}) {
     const page = await context.newPage();
     let result;
 
-    if (isUrlDriven(recording)) {
+    if (!opts.forceSteps && isUrlDriven(recording)) {
       const target = buildReplayUrl(finalUrl(recording), newValues);
       const resp = await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 60000 });
       // Wait for a content signal if given (e.g. results cards), else settle.
@@ -119,9 +124,17 @@ async function replay(recording, newValues = {}, opts = {}) {
       result = await stepReplay(page, recording, newValues, opts);
     }
 
+    // Dismiss blocking overlays (cookie/consent/sign-in modals) before scraping.
+    if (opts.dismissPopups !== false) {
+      result.dismissedPopups = await dismissPopups(page).catch(() => 0);
+    }
+
     if (opts.scrape) {
       const cards = await scrapeCards(page, { max: opts.maxCards || 30 });
-      const structured = await structureResults(cards, { envDir: opts.envDir || process.cwd() });
+      const structured = await structureResults(cards, {
+        envDir: opts.envDir || process.cwd(),
+        ai: opts.ai,
+      });
       result.results = structured.results;
       result.engine = structured.engine;
       if (opts.includeRaw) result.rawCards = cards;

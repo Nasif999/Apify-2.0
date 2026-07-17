@@ -17,6 +17,8 @@ function parseArgs(argv) {
     else if (a === '--shot') args.shot = argv[++i];
     else if (a === '--wait') args.wait = argv[++i];
     else if (a === '--scrape') args.scrape = true;
+    else if (a === '--ai') args.ai = true;
+    else if (a === '--steps') args.forceSteps = true;
     else if (a === '--set') {
       const kv = argv[++i] || '';
       const eq = kv.indexOf('=');
@@ -44,6 +46,8 @@ async function main() {
     screenshotPath: args.shot,
     waitForSelector: args.wait,
     scrape: args.scrape,
+    ai: args.ai,
+    forceSteps: args.forceSteps,
   });
   console.log(JSON.stringify(result, null, 2));
 }

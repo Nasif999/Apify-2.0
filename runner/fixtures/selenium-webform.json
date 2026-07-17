@@ -1,0 +1,39 @@
+{
+  "startedAt": 0,
+  "sites": ["www.selenium.dev"],
+  "steps": [
+    {
+      "id": 1,
+      "fieldType": "text",
+      "selector": "input[name=\"my-text\"]",
+      "type": "input",
+      "url": "https://www.selenium.dev/selenium/web/web-form.html",
+      "value": "recorded text"
+    },
+    {
+      "id": 2,
+      "fieldType": "dropdown",
+      "selector": "select[name=\"my-select\"]",
+      "type": "change",
+      "url": "https://www.selenium.dev/selenium/web/web-form.html",
+      "value": "Two"
+    },
+    {
+      "id": 3,
+      "fieldType": "tickmark",
+      "selector": "#my-check-2",
+      "type": "change",
+      "url": "https://www.selenium.dev/selenium/web/web-form.html",
+      "value": true
+    },
+    {
+      "id": 4,
+      "fieldType": "unknown",
+      "selector": "button[type=\"submit\"]",
+      "type": "click",
+      "url": "https://www.selenium.dev/selenium/web/web-form.html",
+      "value": "Submit"
+    }
+  ],
+  "urlParams": {}
+}
