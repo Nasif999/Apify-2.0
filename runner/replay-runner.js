@@ -10,6 +10,7 @@
 // ../extension/lib/replay.js and is shared/tested separately.
 const { chromium } = require('playwright');
 const { buildReplayUrl, isUrlDriven } = require('../extension/lib/replay');
+const { scrapeCards } = require('./scrape');
 
 function finalUrl(recording) {
   const steps = (recording && recording.steps) || [];
@@ -115,6 +116,10 @@ async function replay(recording, newValues = {}, opts = {}) {
       };
     } else {
       result = await stepReplay(page, recording, newValues, opts);
+    }
+
+    if (opts.scrape) {
+      result.rawCards = await scrapeCards(page, { max: opts.maxCards || 30 });
     }
 
     if (opts.screenshotPath) {

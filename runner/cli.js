@@ -16,6 +16,7 @@ function parseArgs(argv) {
     if (a === '--headed') args.headed = true;
     else if (a === '--shot') args.shot = argv[++i];
     else if (a === '--wait') args.wait = argv[++i];
+    else if (a === '--scrape') args.scrape = true;
     else if (a === '--set') {
       const kv = argv[++i] || '';
       const eq = kv.indexOf('=');
@@ -42,6 +43,7 @@ async function main() {
     headless: !args.headed,
     screenshotPath: args.shot,
     waitForSelector: args.wait,
+    scrape: args.scrape,
   });
   console.log(JSON.stringify(result, null, 2));
 }
