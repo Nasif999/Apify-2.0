@@ -4,7 +4,8 @@
   "description": "Apify v2 — browser task recorder extension (Phase 1: record + classify + export)",
   "private": true,
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "start": "node server/server.js"
   },
   "devDependencies": {
     "jsdom": "^25.0.1",

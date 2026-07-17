@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Apify — Dashboard</title>
+<style>
+  :root{--bg:#0f1115;--panel:#151924;--fg:#e7e9ee;--muted:#9aa3b2;--accent:#5b8cff;--line:#232733;--ok:#33d17a;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,sans-serif}
+  header{padding:18px 24px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:12px}
+  header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:-.02em}
+  header .tag{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:20px;padding:2px 10px}
+  main{max-width:960px;margin:0 auto;padding:24px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:20px}
+  h2{font-size:14px;margin:0 0 12px;font-weight:600}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+  input,textarea{width:100%;background:#0b0d12;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:9px 10px;font:13px/1.4 ui-monospace,monospace}
+  textarea{min-height:120px;resize:vertical}
+  button{background:var(--accent);border:0;color:#fff;padding:9px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer}
+  button:hover{filter:brightness(1.08)}
+  button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+  a.auto{display:block;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;transition:border-color .15s}
+  a.auto:hover{border-color:#39415a}
+  .auto .name{font-weight:600;font-size:15px;margin-bottom:6px}
+  .auto .meta{color:var(--muted);font-size:12px;display:flex;gap:14px;flex-wrap:wrap;margin-top:10px}
+  .price{color:var(--accent);font-weight:700}
+  .key{font-family:ui-monospace,monospace;font-size:11px;color:var(--muted)}
+  .empty{color:var(--muted);text-align:center;padding:30px}
+  .msg{font-size:12px;margin-top:8px}
+  .msg.err{color:#ff5b6e}.msg.ok{color:var(--ok)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Apify</h1><span class="tag">dashboard</span>
+</header>
+<main>
+  <div class="card">
+    <h2>Create an automation</h2>
+    <label>Name</label>
+    <input id="name" placeholder="e.g. Cox's Bazar hotel search" />
+    <label>Recording JSON (exported from the extension)</label>
+    <textarea id="recording" placeholder='{ "steps": [ ... ], "urlParams": { ... } }'></textarea>
+    <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
+      <button id="create">Create</button>
+      <span id="msg" class="msg"></span>
+    </div>
+  </div>
+
+  <h2 style="margin:24px 4px 12px">Your automations</h2>
+  <div id="list" class="grid"></div>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+
+async function loadList(){
+  const res = await fetch('/api/automations');
+  const items = await res.json();
+  const list = $('list');
+  if(!items.length){ list.innerHTML = '<div class="empty">No automations yet — paste a recording above to create one.</div>'; return; }
+  list.innerHTML = '';
+  for(const a of items){
+    const el = document.createElement('a');
+    el.className = 'auto';
+    el.href = `/automation.html?id=${a.id}`;
+    el.innerHTML =
+      `<div class="name"></div>
+       <div class="key"></div>
+       <div class="meta">
+         <span><b>${a.fieldCount}</b> fields</span>
+         <span class="price">৳${a.price} / run</span>
+         <span>${a.runCount} runs</span>
+         <span>${a.mode||''}</span>
+       </div>`;
+    el.querySelector('.name').textContent = a.name;
+    el.querySelector('.key').textContent = a.apiKeyMasked;
+    list.appendChild(el);
+  }
+}
+
+$('create').addEventListener('click', async () => {
+  const msg = $('msg'); msg.textContent=''; msg.className='msg';
+  let recording;
+  try{ recording = JSON.parse($('recording').value); }
+  catch(e){ msg.textContent='Recording is not valid JSON.'; msg.className='msg err'; return; }
+  const res = await fetch('/api/automations', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ name: $('name').value, recording })
+  });
+  const data = await res.json();
+  if(!res.ok){ msg.textContent = data.error || 'Failed'; msg.className='msg err'; return; }
+  msg.textContent = 'Created ✓'; msg.className='msg ok';
+  $('name').value=''; $('recording').value='';
+  loadList();
+});
+
+loadList();
+</script>
+</body>
+</html>
