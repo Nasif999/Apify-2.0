@@ -9,5 +9,8 @@
   "devDependencies": {
     "jsdom": "^25.0.1",
     "playwright": "^1.61.1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }

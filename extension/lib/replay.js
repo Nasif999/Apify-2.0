@@ -49,7 +49,7 @@
     return false;
   }
 
-  const api = { buildReplayUrl, isUrlDriven };
+  const api = { buildReplayUrl, isUrlDriven, paramMap };
   if (global) global.ApifyReplay = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);
