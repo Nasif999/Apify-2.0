@@ -1,0 +1,38 @@
+{
+  "startedAt": 1784319859982,
+  "sites": ["www.booking.com"],
+  "steps": [
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 1,
+      "label": "Cox's Bazar Bangladesh",
+      "selector": "#autocomplete-result-3",
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&sid=3b366e40eed889a3d76820171fa4dc01",
+      "value": "Cox's BazarBangladesh"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 19,
+      "label": "Free WiFi: 45 properties",
+      "selector": "input[name=\"hotelfacility=107\"]",
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?aid=304142&sid=3b366e40eed889a3d76820171fa4dc01&ss=Cox%27s+Bazar%2C+Bangladesh&lang=en-gb&src=index&dest_id=211349&dest_type=city&checkin=2026-07-19&checkout=2026-08-18&group_adults=5&no_rooms=4&group_children=3&age=14&age=12&age=17&nflt=hotelfacility%3D433%3Bclass%3D5%3Bpopular_activities%3D302%3Bhotelfacility%3D107",
+      "value": true
+    }
+  ],
+  "urlParams": {
+    "aid": "304142",
+    "ss": "Cox's Bazar, Bangladesh",
+    "dest_id": "211349",
+    "dest_type": "city",
+    "checkin": "2026-07-19",
+    "checkout": "2026-08-18",
+    "group_adults": "5",
+    "no_rooms": "4",
+    "group_children": "3",
+    "age": ["14", "12", "17"]
+  }
+}
