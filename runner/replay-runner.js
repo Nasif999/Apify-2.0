@@ -11,6 +11,7 @@
 const { chromium } = require('playwright');
 const { buildReplayUrl, isUrlDriven } = require('../extension/lib/replay');
 const { scrapeCards } = require('./scrape');
+const { structureResults } = require('./structure');
 
 function finalUrl(recording) {
   const steps = (recording && recording.steps) || [];
@@ -119,7 +120,11 @@ async function replay(recording, newValues = {}, opts = {}) {
     }
 
     if (opts.scrape) {
-      result.rawCards = await scrapeCards(page, { max: opts.maxCards || 30 });
+      const cards = await scrapeCards(page, { max: opts.maxCards || 30 });
+      const structured = await structureResults(cards, { envDir: opts.envDir || process.cwd() });
+      result.results = structured.results;
+      result.engine = structured.engine;
+      if (opts.includeRaw) result.rawCards = cards;
     }
 
     if (opts.screenshotPath) {
