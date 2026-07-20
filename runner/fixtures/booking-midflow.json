@@ -1,0 +1,111 @@
+{
+  "sites": [
+    "www.booking.com"
+  ],
+  "startedAt": 1784475684514,
+  "steps": [
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 1,
+      "label": "Free cancellation: 343 properties",
+      "selector": "input[name=\"fc=2\"]",
+      "timestamp": 1784475700155,
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?ss=Kuala+Lumpur%2C+Malaysia&efdco=1&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApHZ89IGwAIB0gIkNzRkYzE1OTgtNDNhNi00ODhjLWEwMTUtMDFjYzUzNTMzMWQ52AIB4AIB&sid=3b366e40eed889a3d76820171fa4dc01&aid=304142&lang=en-gb&sb=1&src_elem=sb&src=index&dest_id=-2403010&dest_type=city&checkin=2026-07-20&checkout=2026-08-05&group_adults=4&no_rooms=4&group_children=3&age=17&age=14&age=8",
+      "value": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 2,
+      "label": "Apartments: 971 properties",
+      "selector": "input[name=\"ht_id=201\"]",
+      "timestamp": 1784475700739,
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApHZ89IGwAIB0gIkNzRkYzE1OTgtNDNhNi00ODhjLWEwMTUtMDFjYzUzNTMzMWQ52AIB4AIB&sid=3b366e40eed889a3d76820171fa4dc01&aid=304142&ss=Kuala+Lumpur%2C+Malaysia&efdco=1&lang=en-gb&src=index&dest_id=-2403010&dest_type=city&checkin=2026-07-20&checkout=2026-08-05&group_adults=4&no_rooms=4&group_children=3&age=17&age=14&age=8&nflt=fc%3D2",
+      "value": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 3,
+      "label": "Swimming pool: 1013 properties",
+      "selector": "input[name=\"hotelfacility=433\"]",
+      "timestamp": 1784475701687,
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApHZ89IGwAIB0gIkNzRkYzE1OTgtNDNhNi00ODhjLWEwMTUtMDFjYzUzNTMzMWQ52AIB4AIB&sid=3b366e40eed889a3d76820171fa4dc01&aid=304142&ss=Kuala+Lumpur%2C+Malaysia&efdco=1&lang=en-gb&src=index&dest_id=-2403010&dest_type=city&checkin=2026-07-20&checkout=2026-08-05&group_adults=4&no_rooms=4&group_children=3&age=17&age=14&age=8&nflt=fc%3D2%3Bht_id%3D201",
+      "value": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 4,
+      "label": "Prices in Pound Sterling",
+      "selector": "[data-testid=\"header-currency-picker-trigger\"]",
+      "timestamp": 1784475703603,
+      "type": "click",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApHZ89IGwAIB0gIkNzRkYzE1OTgtNDNhNi00ODhjLWEwMTUtMDFjYzUzNTMzMWQ52AIB4AIB&sid=3b366e40eed889a3d76820171fa4dc01&aid=304142&ss=Kuala+Lumpur%2C+Malaysia&efdco=1&lang=en-gb&src=index&dest_id=-2403010&dest_type=city&checkin=2026-07-20&checkout=2026-08-05&group_adults=4&no_rooms=4&group_children=3&age=17&age=14&age=8&nflt=fc%3D2%3Bht_id%3D201%3Bhotelfacility%3D433",
+      "value": "GBP"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 5,
+      "label": "Singapore Dollar SGD",
+      "selector": "[data-testid=\"selection-item\"]",
+      "timestamp": 1784475704545,
+      "type": "click",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApHZ89IGwAIB0gIkNzRkYzE1OTgtNDNhNi00ODhjLWEwMTUtMDFjYzUzNTMzMWQ52AIB4AIB&sid=3b366e40eed889a3d76820171fa4dc01&aid=304142&ss=Kuala+Lumpur%2C+Malaysia&efdco=1&lang=en-gb&src=index&dest_id=-2403010&dest_type=city&checkin=2026-07-20&checkout=2026-08-05&group_adults=4&no_rooms=4&group_children=3&age=17&age=14&age=8&nflt=fc%3D2%3Bht_id%3D201%3Bhotelfacility%3D433",
+      "value": "Singapore DollarSGD"
+    }
+  ],
+  "urlParams": {
+    "age": [
+      "17",
+      "14",
+      "8"
+    ],
+    "aid": "304142",
+    "checkin": "2026-07-20",
+    "checkout": "2026-08-05",
+    "dest_id": "-2403010",
+    "dest_type": "city",
+    "efdco": "1",
+    "group_adults": "4",
+    "group_children": "3",
+    "label": "gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApHZ89IGwAIB0gIkNzRkYzE1OTgtNDNhNi00ODhjLWEwMTUtMDFjYzUzNTMzMWQ52AIB4AIB",
+    "lang": "en-gb",
+    "nflt": "fc=2;ht_id=201;hotelfacility=433",
+    "no_rooms": "4",
+    "sid": "3b366e40eed889a3d76820171fa4dc01",
+    "src": "index",
+    "ss": "Kuala Lumpur, Malaysia"
+  },
+  "variables": [
+    {
+      "fieldType": "tickmark",
+      "name": "Free cancellation: 343 properties",
+      "nested": false,
+      "selector": "input[name=\"fc=2\"]",
+      "site": "www.booking.com",
+      "value": true
+    },
+    {
+      "fieldType": "tickmark",
+      "name": "Apartments: 971 properties",
+      "nested": false,
+      "selector": "input[name=\"ht_id=201\"]",
+      "site": "www.booking.com",
+      "value": true
+    },
+    {
+      "fieldType": "tickmark",
+      "name": "Swimming pool: 1013 properties",
+      "nested": false,
+      "selector": "input[name=\"hotelfacility=433\"]",
+      "site": "www.booking.com",
+      "value": true
+    }
+  ]
+}

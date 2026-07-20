@@ -1,0 +1,14 @@
+{
+  "startedAt": 1784401402995,
+  "sites": ["gozayaan.com"],
+  "steps": [
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 1, "label": "Sydney", "selector": "div.value", "timestamp": 1784401404082, "type": "click", "url": "https://gozayaan.com/", "value": "Sydney" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 19, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784401415818, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "dropdown", "id": 25, "label": "2 3 4 5 6 7 8 9 10 11", "selector": "#__BVID__238", "timestamp": 1784401418321, "type": "change", "url": "https://gozayaan.com/", "value": "3" },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 30, "label": "Search", "selector": "button.search-btn", "timestamp": 1784401425309, "type": "click", "url": "https://gozayaan.com/", "value": "Search" },
+    { "domain": "gozayaan.com", "fieldType": "tickmark", "id": 31, "label": "Thai Airways", "revealedBy": 28, "selector": "#__BVID__343", "timestamp": 1784401433954, "type": "change", "url": "https://gozayaan.com/flight/list?adult=5&child=3&child_age=3,6,9&infant=2&cabin_class=Economy&trips=XSP,DAC,2026-07-22,DAC,XSP,2026-08-05", "value": true, "nested": true, "parentId": 28 },
+    { "domain": "gozayaan.com", "fieldType": "tickmark", "id": 32, "label": "2 Stops or more", "selector": "#__BVID__348", "timestamp": 1784401435446, "type": "change", "url": "https://gozayaan.com/flight/list?adult=5&child=3&child_age=3,6,9&infant=2&cabin_class=Economy&trips=XSP,DAC,2026-07-22,DAC,XSP,2026-08-05", "value": true }
+  ],
+  "variables": [],
+  "urlParams": { "adult": "5", "child": "3", "child_age": "3,6,9", "infant": "2", "cabin_class": "Economy", "trips": "XSP,DAC,2026-07-22,DAC,XSP,2026-08-05" }
+}

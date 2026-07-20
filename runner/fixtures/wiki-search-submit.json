@@ -1,0 +1,32 @@
+{
+  "startedAt": 1784351355883,
+  "sites": ["en.wikipedia.org"],
+  "steps": [
+    {
+      "domain": "en.wikipedia.org",
+      "fieldType": "text",
+      "id": 1,
+      "label": "Search",
+      "selector": "input[name=\"search\"]",
+      "timestamp": 1784351358912,
+      "type": "input",
+      "url": "https://en.wikipedia.org/wiki/Main_Page",
+      "value": "rajuda"
+    },
+    {
+      "domain": "en.wikipedia.org",
+      "fieldType": "submit",
+      "id": 2,
+      "label": "Search",
+      "selector": "input[name=\"search\"]",
+      "timestamp": 1784351359912,
+      "type": "submit",
+      "url": "https://en.wikipedia.org/wiki/Main_Page",
+      "value": null
+    }
+  ],
+  "variables": [
+    {"name":"Search","fieldType":"text","selector":"input[name=\"search\"]","value":"rajuda","site":"en.wikipedia.org","nested":false}
+  ],
+  "urlParams": {}
+}

@@ -123,3 +123,19 @@ test('a free-text input merely labelled with a date word is text, not calendar',
 test('a non-input date-picker widget with a date label is calendar', () => {
   assert.strictEqual(classifyField(el('<div aria-label="Departure date"></div>')), 'calendar');
 });
+
+test('a bare "day" class on a calendar cell is calendar (span.day, no aria-label)', () => {
+  assert.strictEqual(classifyField(el('<span class="day">22</span>')), 'calendar');
+});
+
+test('a hyphenated "-day" class token is calendar (flatpickr-style)', () => {
+  assert.strictEqual(classifyField(el('<div class="flatpickr-day">15</div>')), 'calendar');
+});
+
+test('"day" appearing inside a longer word is NOT calendar (no false positive)', () => {
+  assert.notStrictEqual(classifyField(el('<div class="everyday-badge">New</div>')), 'calendar');
+});
+
+test('a checkbox labelled with "day" text (not class) is still tickmark, not calendar', () => {
+  assert.strictEqual(classifyField(el('<input type="checkbox" aria-label="Same-day delivery">')), 'tickmark');
+});

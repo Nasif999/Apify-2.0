@@ -1,0 +1,41 @@
+{
+  "startedAt": 1784352466737,
+  "sites": [
+    "www.youtube.com"
+  ],
+  "steps": [
+    {
+      "domain": "www.youtube.com",
+      "fieldType": "text",
+      "id": 1,
+      "label": "Search",
+      "selector": "input[name=\"search_query\"]",
+      "timestamp": 1784352471313,
+      "type": "input",
+      "url": "https://www.youtube.com/",
+      "value": "rajuda"
+    },
+    {
+      "domain": "www.youtube.com",
+      "fieldType": "submit",
+      "id": 7,
+      "label": "Search",
+      "selector": "input[name=\"search_query\"]",
+      "timestamp": 1784352472001,
+      "type": "submit",
+      "url": "https://www.youtube.com/",
+      "value": ""
+    }
+  ],
+  "variables": [
+    {
+      "name": "Search",
+      "fieldType": "text",
+      "selector": "input[name=\"search_query\"]",
+      "value": "rajuda",
+      "site": "www.youtube.com",
+      "nested": false
+    }
+  ],
+  "urlParams": {}
+}

@@ -12,9 +12,14 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["lib/selector.js", "lib/classify.js", "lib/recorder.js", "content.js"],
+      "js": ["lib/selector.js", "lib/classify.js", "lib/label.js", "lib/fieldvalue.js", "lib/context.js", "lib/recorder.js", "content.js"],
       "run_at": "document_idle",
       "all_frames": false
+    },
+    {
+      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html"],
+      "js": ["handoff.js"],
+      "run_at": "document_idle"
     }
   ]
 }

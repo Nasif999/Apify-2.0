@@ -31,15 +31,19 @@
     return stored;
   }
 
-  // Collapse runs of text-input events on the same selector into their final value.
+  // Collapse consecutive text-field events on the same selector into their
+  // final value. Matches on fieldType rather than only type === 'input' so a
+  // focus click on a text box (recorded so the box becomes an editable field
+  // even when the user picks an autocomplete suggestion without typing) merges
+  // with the typing that may follow, instead of surfacing the same input twice.
   function coalesce(actions) {
     const out = [];
     for (const a of actions) {
       const prev = out[out.length - 1];
       if (
-        a.type === 'input' &&
+        a.fieldType === 'text' &&
         prev &&
-        prev.type === 'input' &&
+        prev.fieldType === 'text' &&
         prev.selector === a.selector
       ) {
         prev.value = a.value; // keep first id/timestamp, update to final value

@@ -30,6 +30,13 @@
   .empty{color:var(--muted);text-align:center;padding:30px}
   .msg{font-size:12px;margin-top:8px}
   .msg.err{color:#ff5b6e}.msg.ok{color:var(--ok)}
+  .auto-wrap{position:relative}
+  .auto-wrap .pick{position:absolute;top:14px;right:14px;width:18px;height:18px;z-index:2}
+  .listbar{display:flex;align-items:center;gap:14px;margin:24px 4px 12px}
+  .listbar h2{margin:0}
+  .listbar label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin:0}
+  button.danger{background:#ff5b6e}
+  button:disabled{opacity:.4;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -41,15 +48,26 @@
     <h2>Create an automation</h2>
     <label>Name</label>
     <input id="name" placeholder="e.g. Cox's Bazar hotel search" />
-    <label>Recording JSON (exported from the extension)</label>
-    <textarea id="recording" placeholder='{ "steps": [ ... ], "urlParams": { ... } }'></textarea>
+    <div id="recordingField">
+      <label>Recording JSON (exported from the extension)</label>
+      <textarea id="recording" placeholder='{ "steps": [ ... ], "urlParams": { ... } }'></textarea>
+    </div>
+    <label style="display:flex;align-items:center;gap:6px;font-weight:400;margin-top:8px">
+      <input type="checkbox" id="scanForMissedFields" style="width:auto" />
+      Scan for missed fields (uses AI, takes a few extra seconds)
+    </label>
     <div style="margin-top:12px;display:flex;gap:8px;align-items:center">
       <button id="create">Create</button>
       <span id="msg" class="msg"></span>
     </div>
   </div>
 
-  <h2 style="margin:24px 4px 12px">Your automations</h2>
+  <div class="listbar">
+    <h2>Your automations</h2>
+    <label><input type="checkbox" id="selectAll" /> Select all</label>
+    <button class="danger" id="deleteSelected" disabled>Delete selected</button>
+    <span id="delmsg" class="msg"></span>
+  </div>
   <div id="list" class="grid"></div>
 </main>
 <script>
@@ -62,6 +80,9 @@ async function loadList(){
   if(!items.length){ list.innerHTML = '<div class="empty">No automations yet — paste a recording above to create one.</div>'; return; }
   list.innerHTML = '';
   for(const a of items){
+    const wrap = document.createElement('div');
+    wrap.className = 'auto-wrap';
+    wrap.innerHTML = `<input type="checkbox" class="pick" data-id="${a.id}" />`;
     const el = document.createElement('a');
     el.className = 'auto';
     el.href = `/automation.html?id=${a.id}`;
@@ -76,23 +97,66 @@ async function loadList(){
        </div>`;
     el.querySelector('.name').textContent = a.name;
     el.querySelector('.key').textContent = a.apiKeyMasked;
-    list.appendChild(el);
+    wrap.querySelector('.pick').addEventListener('change', updateDeleteButton);
+    wrap.appendChild(el);
+    list.appendChild(wrap);
   }
+  $('selectAll').checked = false;
+  updateDeleteButton();
 }
+
+function checkboxes(){ return Array.from(document.querySelectorAll('#list .pick')); }
+
+function updateDeleteButton(){
+  const any = checkboxes().some(cb => cb.checked);
+  $('deleteSelected').disabled = !any;
+}
+
+$('selectAll').addEventListener('change', () => {
+  checkboxes().forEach(cb => cb.checked = $('selectAll').checked);
+  updateDeleteButton();
+});
+
+$('deleteSelected').addEventListener('click', async () => {
+  const ids = checkboxes().filter(cb => cb.checked).map(cb => cb.getAttribute('data-id'));
+  if(!ids.length) return;
+  const delmsg = $('delmsg'); delmsg.textContent = ''; delmsg.className = 'msg';
+  const results = await Promise.all(ids.map(id => fetch('/api/automations/'+id, { method: 'DELETE' })));
+  const failed = results.filter(r => !r.ok).length;
+  delmsg.textContent = failed ? `${failed} failed to delete` : 'Deleted ✓';
+  delmsg.className = failed ? 'msg err' : 'msg ok';
+  loadList();
+});
+
+// Applied straight from a DOM message, not chrome.storage — page JS has no
+// chrome.* API access. Pure enough to unit test: takes doc+recording, mutates.
+function applyPendingRecording(doc, recording){
+  doc.getElementById('recording').value = JSON.stringify(recording);
+  doc.getElementById('recordingField').style.display = 'none';
+  doc.getElementById('name').focus();
+}
+
+window.addEventListener('message', (e) => {
+  if (e.source !== window || !e.data || e.data.source !== 'apify-extension') return;
+  if (e.data.type !== 'pending-recording') return;
+  applyPendingRecording(document, e.data.recording);
+});
 
 $('create').addEventListener('click', async () => {
   const msg = $('msg'); msg.textContent=''; msg.className='msg';
   let recording;
   try{ recording = JSON.parse($('recording').value); }
   catch(e){ msg.textContent='Recording is not valid JSON.'; msg.className='msg err'; return; }
+  const scanning = $('scanForMissedFields').checked;
+  if(scanning){ msg.textContent = 'Creating (scanning for missed fields)…'; msg.className='msg'; }
   const res = await fetch('/api/automations', {
     method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ name: $('name').value, recording })
+    body: JSON.stringify({ name: $('name').value, recording, scanForMissedFields: scanning })
   });
   const data = await res.json();
   if(!res.ok){ msg.textContent = data.error || 'Failed'; msg.className='msg err'; return; }
   msg.textContent = 'Created ✓'; msg.className='msg ok';
-  $('name').value=''; $('recording').value='';
+  $('name').value=''; $('recording').value=''; $('scanForMissedFields').checked=false;
   loadList();
 });
 

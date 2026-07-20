@@ -6,7 +6,8 @@
 //
 // Relies on globals from lib/*.js (loaded before this file by the manifest):
 //   ApifySelector.generateSelector, ApifyClassify.classifyField,
-//   ApifyRecorder.newRecording/addAction/serialize
+//   ApifyLabel.getLabel, ApifyFieldValue.captureFieldValue,
+//   ApifyContext.captureContext, ApifyRecorder.newRecording/addAction/serialize
 (function () {
   const KEY_ACTIVE = 'apify_active';
   const KEY_REC = 'apify_recording';
@@ -35,67 +36,7 @@
     }, 250);
   }
 
-  const MAX_LABEL = 100;
-
-  function clean(s) {
-    return s ? s.replace(/\s+/g, ' ').trim() : '';
-  }
-
-  // Resolve the text referenced by aria-labelledby (space-separated id list).
-  function labelledByText(el) {
-    const ids = el.getAttribute('aria-labelledby');
-    if (!ids) return '';
-    return clean(
-      ids
-        .split(/\s+/)
-        .map((id) => {
-          const ref = document.getElementById(id);
-          return ref ? ref.textContent : '';
-        })
-        .join(' ')
-    );
-  }
-
-  // A human-readable name for whatever was clicked, tried in order of reliability.
-  // Ends with the element's own visible text so every click gets a name even when
-  // there is no aria-label/label (e.g. an autocomplete suggestion like
-  // "Dhaka, Bangladesh" or a "Search" button).
-  function getLabel(el) {
-    const aria = clean(el.getAttribute('aria-label'));
-    if (aria) return aria;
-
-    const byId = labelledByText(el);
-    if (byId) return byId.slice(0, MAX_LABEL);
-
-    if (el.labels && el.labels.length) return clean(el.labels[0].textContent).slice(0, MAX_LABEL);
-    if (el.id) {
-      const lbl = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
-      if (lbl) return clean(lbl.textContent).slice(0, MAX_LABEL);
-    }
-    const wrap = el.closest && el.closest('label');
-    if (wrap) return clean(wrap.textContent).slice(0, MAX_LABEL);
-
-    const title = clean(el.getAttribute('title'));
-    if (title) return title;
-
-    // Visible text of the element itself (innerText respects visibility when
-    // available; textContent is the jsdom/test fallback).
-    const text = clean(el.innerText || el.textContent);
-    if (text) return text.slice(0, MAX_LABEL);
-
-    // Icon-only control: fall back to an inner image's alt text.
-    const img = el.querySelector && el.querySelector('img[alt]');
-    if (img) {
-      const alt = clean(img.getAttribute('alt'));
-      if (alt) return alt;
-    }
-
-    const ph = clean(el.getAttribute('placeholder'));
-    if (ph) return ph;
-    const name = clean(el.getAttribute('name'));
-    if (name) return name;
-    return '';
-  }
+  const getLabel = ApifyLabel.getLabel;
 
   // Input types that are not free-text entry. Date types are sourced from the
   // classifier so the list has a single definition (no drift).
@@ -118,27 +59,7 @@
 
   // Field types whose value comes from a form control.
   const VALUE_FIELD_TYPES = ['text', 'dropdown', 'tickmark', 'calendar'];
-  // A suggestion/option label is short; a container's textContent is huge. Cap the
-  // value captured from an unknown click so we grab "New Delhi, India" (an
-  // autocomplete pick) without dumping an entire panel's text.
-  const MAX_CLICK_VALUE = 80;
-
-  function captureFieldValue(el, fieldType) {
-    if (fieldType === 'tickmark') return !!el.checked;
-    if (fieldType === 'dropdown' && el.tagName === 'SELECT') {
-      const opt = el.selectedOptions && el.selectedOptions[0];
-      return opt ? opt.textContent.trim() : el.value;
-    }
-    if (fieldType === 'text' || fieldType === 'calendar') {
-      if (el.isContentEditable) return el.textContent;
-      return el.value != null ? el.value : el.textContent;
-    }
-    if (fieldType === 'unknown') {
-      const t = (el.textContent || '').trim();
-      return t.length && t.length <= MAX_CLICK_VALUE ? t : '';
-    }
-    return ''; // stepper and anything else: no meaningful value
-  }
+  const captureFieldValue = ApifyFieldValue.captureFieldValue;
 
   function record(el, type, fieldType) {
     const selector = ApifySelector.generateSelector(el);
@@ -149,6 +70,10 @@
       selector,
       value: captureFieldValue(el, fieldType),
       label: getLabel(el),
+      // Rich snapshot of the element and its surroundings. The page is gone by
+      // the time anything interprets this recording, so identifying detail not
+      // captured here is unrecoverable — see lib/context.js.
+      context: ApifyContext.captureContext(el),
       url: location.href,
     };
 
@@ -196,6 +121,20 @@
       lastTextSelector = selector;
     }
     persist();
+  }
+
+  // For an event that originated inside an (open) shadow root, `e.target` is
+  // retargeted to the shadow HOST element by the DOM spec — not the actual
+  // element the user interacted with. Any site built with web components
+  // (common: date pickers, custom selects, design-system components) would
+  // otherwise get recorded against the wrong, useless element. composedPath()
+  // gives the true originating node regardless of shadow boundaries.
+  function realTarget(e) {
+    if (typeof e.composedPath === 'function') {
+      const path = e.composedPath();
+      if (path.length) return path[0];
+    }
+    return e.target;
   }
 
   function resolveControl(target) {
@@ -254,9 +193,23 @@
   // Record a click on a resolved element. Returns true if something was recorded.
   function recordClick(el) {
     const fieldType = ApifyClassify.classifyField(el);
-    // dropdown/tickmark/text are captured by the input/change handlers.
-    if (fieldType === 'dropdown' || fieldType === 'tickmark' || fieldType === 'text') return false;
+    // dropdown/tickmark commit through the change handler; a click on them
+    // carries no value of its own.
+    if (fieldType === 'dropdown' || fieldType === 'tickmark') return false;
     if (isRedundantWithChange(el)) return false;
+
+    // A click into a text box is itself a real interaction with a real field.
+    // Waiting for an input event misses the very common pattern of focusing a
+    // search box and picking a suggestion from the dropdown WITHOUT typing
+    // (IMDb, and any site that shows recent/top results on focus) — the box
+    // would never be recorded, leaving the automation with nothing to edit.
+    // Recording it here also seeds lastTextId, so the suggestion click that
+    // follows gets its normal autocomplete linkage. If the user does go on to
+    // type, recorder.js's coalesce merges this into that same single field.
+    if (fieldType === 'text') {
+      record(el, 'click', 'text');
+      return true;
+    }
 
     if (fieldType === 'stepper') {
       record(el, 'click', 'stepper');
@@ -288,7 +241,7 @@
 
   function onPointerDown(e) {
     if (!active) return;
-    const el = resolveControl(e.target);
+    const el = resolveControl(realTarget(e));
     if (!el) return;
     const fieldType = ApifyClassify.classifyField(el);
     // Only defer for click-like controls that a click handler would record anyway.
@@ -304,14 +257,24 @@
     if (!active) return;
     // A real click fired — cancel any deferred pointerdown so we record only once.
     cancelPendingPointer();
-    const el = resolveControl(e.target);
+    const el = resolveControl(realTarget(e));
     if (!el) return;
     recordClick(el);
   }
 
+  // Enter-to-submit is common (search boxes) and fires no click/change — capture
+  // it explicitly so replay knows to press Enter instead of silently stopping.
+  function onKeyDown(e) {
+    if (!active) return;
+    if (e.key !== 'Enter' || e.shiftKey) return;
+    const el = realTarget(e);
+    if (!el || el.tagName !== 'INPUT' || !isTextEntry(el)) return;
+    record(el, 'submit', 'submit');
+  }
+
   function onInput(e) {
     if (!active) return;
-    const el = e.target;
+    const el = realTarget(e);
     // Record any free-text entry as text, even if the element also classifies as
     // a dropdown (autocomplete comboboxes) — we want the typed value.
     if (isTextEntry(el)) record(el, 'input', 'text');
@@ -319,7 +282,7 @@
 
   function onChange(e) {
     if (!active) return;
-    const el = e.target;
+    const el = realTarget(e);
     // A free-text/combobox input (e.g. YouTube search, role="combobox") is owned
     // by the input handler as text; don't also record its change as a dropdown.
     if (isTextEntry(el)) return;
@@ -337,6 +300,7 @@
     document.addEventListener('click', onClick, true);
     document.addEventListener('input', onInput, true);
     document.addEventListener('change', onChange, true);
+    document.addEventListener('keydown', onKeyDown, true);
   }
 
   function detach() {
@@ -344,6 +308,7 @@
     document.removeEventListener('click', onClick, true);
     document.removeEventListener('input', onInput, true);
     document.removeEventListener('change', onChange, true);
+    document.removeEventListener('keydown', onKeyDown, true);
   }
 
   // Rehydrate state on every page load so recording continues across navigations.

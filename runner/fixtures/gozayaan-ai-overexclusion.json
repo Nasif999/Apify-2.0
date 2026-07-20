@@ -1,0 +1,29 @@
+{
+  "startedAt": 1784532849586,
+  "sites": ["gozayaan.com"],
+  "steps": [
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 1, "label": "Dhaka", "selector": "div.value", "timestamp": 1784532850763, "type": "click", "url": "https://gozayaan.com/", "value": "Dhaka" },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 2, "label": "Cox's Bazar, Bangladesh", "selector": "div.city-country", "timestamp": 1784532852403, "type": "click", "url": "https://gozayaan.com/", "value": "Cox's Bazar, Bangladesh" },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 3, "label": "Hazrat Shahjalal International Airport", "selector": "div.airport-name", "timestamp": 1784532856132, "type": "click", "url": "https://gozayaan.com/", "value": "Hazrat Shahjalal International Airport" },
+    { "domain": "gozayaan.com", "fieldType": "calendar", "id": 4, "label": "20", "selector": "span.day", "timestamp": 1784532857583, "type": "click", "url": "https://gozayaan.com/", "value": "20" },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 5, "label": "Save more on return flight", "selector": "span.sub-value.inline-style", "timestamp": 1784532858396, "type": "click", "url": "https://gozayaan.com/", "value": "Save more on return flight" },
+    { "domain": "gozayaan.com", "fieldType": "calendar", "id": 6, "label": "4", "selector": "span.day", "timestamp": 1784532859924, "type": "click", "url": "https://gozayaan.com/", "value": "4" },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 7, "label": "Economy", "selector": "span.sub-value", "timestamp": 1784532861016, "type": "click", "url": "https://gozayaan.com/", "value": "Economy" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 8, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532861841, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 9, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532862020, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 10, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532862210, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 11, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532862974, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 12, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532863148, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 13, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532863320, "type": "click", "url": "https://gozayaan.com/", "value": "", "hasNested": true },
+    { "domain": "gozayaan.com", "fieldType": "dropdown", "id": 14, "label": "2 3 4 5 6 7 8 9 10 11", "revealedBy": 13, "selector": "#__BVID__238", "timestamp": 1784532864270, "type": "change", "url": "https://gozayaan.com/", "value": "4", "nested": true, "parentId": 13 },
+    { "domain": "gozayaan.com", "fieldType": "dropdown", "id": 15, "label": "2 3 4 5 6 7 8 9 10 11", "selector": "#__BVID__239", "timestamp": 1784532865316, "type": "change", "url": "https://gozayaan.com/", "value": "8" },
+    { "domain": "gozayaan.com", "fieldType": "dropdown", "id": 16, "label": "2 3 4 5 6 7 8 9 10 11", "selector": "#__BVID__240", "timestamp": 1784532867022, "type": "change", "url": "https://gozayaan.com/", "value": "11" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 17, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532868906, "type": "click", "url": "https://gozayaan.com/", "value": "" },
+    { "domain": "gozayaan.com", "fieldType": "stepper", "id": 18, "label": "", "selector": "button.btn.adjust.btn-link", "timestamp": 1784532869095, "type": "click", "url": "https://gozayaan.com/", "value": "", "hasNested": true },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 19, "label": "Done", "selector": "button.btn.picker-mb-btn.btn-secondary", "timestamp": 1784532870194, "type": "click", "url": "https://gozayaan.com/", "value": "Done" },
+    { "domain": "gozayaan.com", "fieldType": "unknown", "id": 20, "label": "Search", "selector": "button.search-btn", "timestamp": 1784532870951, "type": "click", "url": "https://gozayaan.com/", "value": "Search" },
+    { "domain": "gozayaan.com", "fieldType": "tickmark", "id": 21, "label": "Air Astra", "revealedBy": 18, "selector": "#__BVID__345", "timestamp": 1784532877813, "type": "change", "url": "https://gozayaan.com/flight/list?adult=4&child=3&child_age=4,8,11&infant=2&cabin_class=Economy&trips=CXB,DAC,2026-07-20,DAC,CXB,2026-08-04", "value": true, "nested": true, "parentId": 18 }
+  ],
+  "variables": [],
+  "urlParams": { "adult": "4", "child": "3", "child_age": "4,8,11", "infant": "2", "cabin_class": "Economy", "trips": "CXB,DAC,2026-07-20,DAC,CXB,2026-08-04" }
+}

@@ -29,6 +29,44 @@ test('consecutive text inputs on the same selector coalesce to the final value',
   assert.strictEqual(out.steps[0].value, 'cats');
 });
 
+test('a text-field click followed by typing on the same selector coalesces into one field', () => {
+  // regression: on IMDb the user clicked the search box (recorded as a text
+  // step with the box's current value) and then typed. Without merging these,
+  // the same input would surface twice in the form -- once empty from the
+  // click, once with the typed value. They are one field; keep the final value.
+  const rec = newRecording(0);
+  addAction(rec, { type: 'click', fieldType: 'text', selector: '#q', value: '', url: U }, 1);
+  addAction(rec, { type: 'input', fieldType: 'text', selector: '#q', value: 'du', url: U }, 2);
+  addAction(rec, { type: 'input', fieldType: 'text', selector: '#q', value: 'dune', url: U }, 3);
+  const out = serialize(rec);
+  assert.strictEqual(out.steps.length, 1);
+  assert.strictEqual(out.steps[0].value, 'dune');
+});
+
+test('a text-field click with NO typing still yields one editable text step', () => {
+  // regression: this is the IMDb bug. The user clicked the search box and
+  // picked a suggestion from the dropdown WITHOUT typing anything, so no
+  // input event ever fired. The search box must still become an editable
+  // field -- otherwise the automation has no way to search for anything else.
+  const rec = newRecording(0);
+  addAction(rec, { type: 'click', fieldType: 'text', selector: '#q', value: '', url: U, label: 'Search IMDb' }, 1);
+  addAction(rec, { type: 'click', fieldType: 'unknown', selector: '.suggestion', value: 'Dune', url: U }, 2);
+  const out = serialize(rec);
+  const textSteps = out.steps.filter((s) => s.fieldType === 'text');
+  assert.strictEqual(textSteps.length, 1);
+  assert.strictEqual(textSteps[0].selector, '#q');
+  // and it is surfaced as an editable variable, not swallowed
+  assert.ok(out.variables.some((v) => v.fieldType === 'text' && v.selector === '#q'));
+});
+
+test('text steps on DIFFERENT selectors still do not coalesce', () => {
+  const rec = newRecording(0);
+  addAction(rec, { type: 'click', fieldType: 'text', selector: '#from', value: '', url: U }, 1);
+  addAction(rec, { type: 'input', fieldType: 'text', selector: '#to', value: 'x', url: U }, 2);
+  const out = serialize(rec);
+  assert.strictEqual(out.steps.length, 2);
+});
+
 test('inputs on the same selector separated by another action do not coalesce', () => {
   const rec = newRecording(0);
   addAction(rec, { type: 'input', fieldType: 'text', selector: '#q', value: 'cats', url: U }, 1);

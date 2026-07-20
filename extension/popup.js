@@ -59,6 +59,11 @@ $('start').addEventListener('click', async () => {
 
 $('stop').addEventListener('click', async () => {
   await set({ [KEY_ACTIVE]: false });
+  const rec = await currentRecording();
+  if (rec && rec.actions && rec.actions.length) {
+    await set({ apify_pending_recording: ApifyRecorder.serialize(rec) });
+    chrome.tabs.create({ url: 'http://localhost:3000/dashboard.html' });
+  }
   refresh();
 });
 

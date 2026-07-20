@@ -1,0 +1,383 @@
+{
+  "startedAt": 1784473370464,
+  "sites": [
+    "www.booking.com"
+  ],
+  "steps": [
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 1,
+      "label": "Bangkok Thailand",
+      "selector": "#autocomplete-result-1",
+      "timestamp": 1784473373081,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": "BangkokThailand"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 2,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473376875,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 3,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473377037,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 4,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473377219,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 5,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473377794,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 6,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473377952,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 7,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473378134,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": "",
+      "hasNested": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "dropdown",
+      "id": 8,
+      "label": "Age of child at check-out",
+      "revealedBy": 7,
+      "selector": "select[name=\"age\"]",
+      "timestamp": 1784473378908,
+      "type": "change",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": "15 years old",
+      "nested": true,
+      "parentId": 7
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "dropdown",
+      "id": 9,
+      "label": "Age of child at check-out",
+      "selector": "select[name=\"age\"]",
+      "timestamp": 1784473379711,
+      "type": "change",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": "8 years old"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "dropdown",
+      "id": 10,
+      "label": "Age of child at check-out",
+      "selector": "select[name=\"age\"]",
+      "timestamp": 1784473380722,
+      "type": "change",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": "2 years old"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 11,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473381632,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 12,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473381795,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 13,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473381962,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "stepper",
+      "id": 14,
+      "label": "",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "timestamp": 1784473382127,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": ""
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 15,
+      "label": "Search",
+      "selector": "[data-testid=\"searchbox-layout-wide\"] button:nth-of-type(1)",
+      "timestamp": 1784473383491,
+      "type": "click",
+      "url": "https://www.booking.com/index.en-gb.html?aid=304142&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&chal_t=1784473362910&force_referer=",
+      "value": "Search"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 16,
+      "label": "Swimming pool: 405 properties",
+      "selector": "input[name=\"hotelfacility=433\"]",
+      "timestamp": 1784473388597,
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?ss=Bangkok%2C+Thailand&efdco=1&label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&aid=304142&lang=en-gb&sb=1&src_elem=sb&src=index&dest_id=-3414440&dest_type=city&checkin=2026-07-20&checkout=2026-08-04&group_adults=5&no_rooms=5&group_children=3&age=15&age=8&age=2",
+      "value": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 17,
+      "label": "Free cancellation: 55 properties",
+      "selector": "input[name=\"fc=2\"]",
+      "timestamp": 1784473389280,
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&aid=304142&ss=Bangkok%2C+Thailand&efdco=1&lang=en-gb&src=index&dest_id=-3414440&dest_type=city&checkin=2026-07-20&checkout=2026-08-04&group_adults=5&no_rooms=5&group_children=3&age=15&age=8&age=2&nflt=hotelfacility%3D433",
+      "value": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "tickmark",
+      "id": 18,
+      "label": "Breakfast included: 36 properties",
+      "selector": "input[name=\"mealplan=1\"]",
+      "timestamp": 1784473390717,
+      "type": "change",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&aid=304142&ss=Bangkok%2C+Thailand&efdco=1&lang=en-gb&src=index&dest_id=-3414440&dest_type=city&checkin=2026-07-20&checkout=2026-08-04&group_adults=5&no_rooms=5&group_children=3&age=15&age=8&age=2&nflt=hotelfacility%3D433%3Bfc%3D2",
+      "value": true
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 19,
+      "label": "Prices in Brazilian Real",
+      "selector": "[data-testid=\"header-currency-picker-trigger\"]",
+      "timestamp": 1784473393760,
+      "type": "click",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&aid=304142&ss=Bangkok%2C+Thailand&efdco=1&lang=en-gb&src=index&dest_id=-3414440&dest_type=city&checkin=2026-07-20&checkout=2026-08-04&group_adults=5&no_rooms=5&group_children=3&age=15&age=8&age=2&nflt=hotelfacility%3D433%3Bfc%3D2%3Bmealplan%3D1",
+      "value": "BRL"
+    },
+    {
+      "domain": "www.booking.com",
+      "fieldType": "unknown",
+      "id": 20,
+      "label": "Singapore Dollar SGD",
+      "selector": "[data-testid=\"selection-item\"]",
+      "timestamp": 1784473394744,
+      "type": "click",
+      "url": "https://www.booking.com/searchresults.en-gb.html?label=gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB&aid=304142&ss=Bangkok%2C+Thailand&efdco=1&lang=en-gb&src=index&dest_id=-3414440&dest_type=city&checkin=2026-07-20&checkout=2026-08-04&group_adults=5&no_rooms=5&group_children=3&age=15&age=8&age=2&nflt=hotelfacility%3D433%3Bfc%3D2%3Bmealplan%3D1",
+      "value": "Singapore DollarSGD"
+    }
+  ],
+  "variables": [
+    {
+      "name": "stepper_1",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_2",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_3",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_4",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_5",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_6",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "Age of child at check-out",
+      "fieldType": "dropdown",
+      "selector": "select[name=\"age\"]",
+      "value": "15 years old",
+      "site": "www.booking.com",
+      "nested": true
+    },
+    {
+      "name": "Age of child at check-out",
+      "fieldType": "dropdown",
+      "selector": "select[name=\"age\"]",
+      "value": "8 years old",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "Age of child at check-out",
+      "fieldType": "dropdown",
+      "selector": "select[name=\"age\"]",
+      "value": "2 years old",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_7",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_8",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_9",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "stepper_10",
+      "fieldType": "stepper",
+      "selector": "[data-testid=\"occupancy-popup\"] button:nth-of-type(2)",
+      "value": "",
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "Swimming pool: 405 properties",
+      "fieldType": "tickmark",
+      "selector": "input[name=\"hotelfacility=433\"]",
+      "value": true,
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "Free cancellation: 55 properties",
+      "fieldType": "tickmark",
+      "selector": "input[name=\"fc=2\"]",
+      "value": true,
+      "site": "www.booking.com",
+      "nested": false
+    },
+    {
+      "name": "Breakfast included: 36 properties",
+      "fieldType": "tickmark",
+      "selector": "input[name=\"mealplan=1\"]",
+      "value": true,
+      "site": "www.booking.com",
+      "nested": false
+    }
+  ],
+  "urlParams": {
+    "label": "gen173nr-10CAEoggI46AdIM1gEaBSIAQGYATO4ARfIAQzYAQPoAQH4AQGIAgGoAgG4ApTO89IGwAIB0gIkOTI0Zjk0NzEtNzY0Ni00ZTkwLTk3MzgtYWJhODI3ZjhhMDZk2AIB4AIB",
+    "aid": "304142",
+    "ss": "Bangkok, Thailand",
+    "efdco": "1",
+    "lang": "en-gb",
+    "src": "index",
+    "dest_id": "-3414440",
+    "dest_type": "city",
+    "checkin": "2026-07-20",
+    "checkout": "2026-08-04",
+    "group_adults": "5",
+    "no_rooms": "5",
+    "group_children": "3",
+    "age": [
+      "15",
+      "8",
+      "2"
+    ],
+    "nflt": "hotelfacility=433;fc=2;mealplan=1"
+  }
+}

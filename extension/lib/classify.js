@@ -18,6 +18,11 @@
   // Weak signals (a date word in a label) — only trusted on non-input widgets,
   // so a free-text input merely labelled "…date" is NOT misread as a calendar.
   const DATE_WEAK = /(check-?in|check-?out|departure|\bdate\b)/i;
+  // A bare "day" class token (e.g. class="day", "calendar-day", "flatpickr-day")
+  // is an extremely common calendar-cell naming convention across many
+  // date-picker libraries. Trusted only as a CLASS name, not label/placeholder
+  // text, where "day" is far too generic (e.g. "Same-day delivery").
+  const DAY_CLASS = /\bday\b/i;
   const STEPPER_HINT = /(increase|decrease|increment|decrement|plus|minus|\badd\b|\bremove\b|\bmore\b|\bfewer\b)/i;
 
   function typeOf(el) {
@@ -50,7 +55,8 @@
       el.getAttribute('aria-label') || '',
       el.getAttribute('placeholder') || '',
     ].join(' ');
-    return DATE_STRONG.test(sources) || DATE_WEAK.test(sources);
+    if (DATE_STRONG.test(sources) || DATE_WEAK.test(sources)) return true;
+    return DAY_CLASS.test(classId);
   }
 
   function isDropdown(el) {

@@ -1,0 +1,358 @@
+{
+  "sites": [
+    "gozayaan.com"
+  ],
+  "startedAt": 1784530260366,
+  "steps": [
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 1,
+      "label": "FROM Dhaka DAC, Hazrat Shahjalal International Airport",
+      "selector": "div.box.location.from",
+      "timestamp": 1784530262037,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 2,
+      "label": "Cox's Bazar, Bangladesh",
+      "selector": "div.city-country",
+      "timestamp": 1784530266223,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "Cox's Bazar, Bangladesh"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 3,
+      "label": "Hazrat Shahjalal International Airport",
+      "selector": "div.airport-name",
+      "timestamp": 1784530267728,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "Hazrat Shahjalal International Airport"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "calendar",
+      "id": 4,
+      "label": "20",
+      "selector": "span.day",
+      "timestamp": 1784530269709,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "\n          20\n            \n                    \n                  "
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 5,
+      "label": "Save more on return flight",
+      "selector": "span.sub-value.inline-style",
+      "timestamp": 1784530270555,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "Save more on return flight"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "calendar",
+      "id": 6,
+      "label": "6",
+      "selector": "span.day",
+      "timestamp": 1784530271820,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "\n          6\n            \n                    8.6K\n                  "
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 7,
+      "label": "1 Traveler",
+      "selector": "div.value",
+      "timestamp": 1784530272379,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "1\n                  Traveler"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 8,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530273572,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 9,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530273729,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 10,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530273890,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 11,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530274079,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 12,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530274512,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 13,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530274686,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "hasNested": true,
+      "id": 14,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530274848,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "dropdown",
+      "id": 15,
+      "label": "2 3 4 5 6 7 8 9 10 11",
+      "nested": true,
+      "parentId": 14,
+      "revealedBy": 14,
+      "selector": "#__BVID__238",
+      "timestamp": 1784530275894,
+      "type": "change",
+      "url": "https://gozayaan.com/",
+      "value": "3"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "dropdown",
+      "id": 16,
+      "label": "2 3 4 5 6 7 8 9 10 11",
+      "selector": "#__BVID__239",
+      "timestamp": 1784530276652,
+      "type": "change",
+      "url": "https://gozayaan.com/",
+      "value": "5"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "dropdown",
+      "id": 17,
+      "label": "2 3 4 5 6 7 8 9 10 11",
+      "selector": "#__BVID__240",
+      "timestamp": 1784530277544,
+      "type": "change",
+      "url": "https://gozayaan.com/",
+      "value": "8"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 18,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530279046,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "stepper",
+      "id": 19,
+      "label": "",
+      "selector": "button.btn.adjust.btn-link",
+      "timestamp": 1784530279221,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": ""
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 20,
+      "label": "Done",
+      "selector": "button.btn.picker-mb-btn.btn-secondary",
+      "timestamp": 1784530280559,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "Done"
+    },
+    {
+      "domain": "gozayaan.com",
+      "fieldType": "unknown",
+      "id": 21,
+      "label": "Search",
+      "selector": "button.search-btn",
+      "timestamp": 1784530281766,
+      "type": "click",
+      "url": "https://gozayaan.com/",
+      "value": "Search"
+    }
+  ],
+  "urlParams": {},
+  "variables": [
+    {
+      "fieldType": "calendar",
+      "name": "20",
+      "nested": false,
+      "selector": "span.day",
+      "site": "gozayaan.com",
+      "value": "\n          20\n            \n                    \n                  "
+    },
+    {
+      "fieldType": "calendar",
+      "name": "6",
+      "nested": false,
+      "selector": "span.day",
+      "site": "gozayaan.com",
+      "value": "\n          6\n            \n                    8.6K\n                  "
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_1",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_2",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_3",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_4",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_5",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_6",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_7",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "dropdown",
+      "name": "2 3 4 5 6 7 8 9 10 11",
+      "nested": true,
+      "selector": "#__BVID__238",
+      "site": "gozayaan.com",
+      "value": "3"
+    },
+    {
+      "fieldType": "dropdown",
+      "name": "2 3 4 5 6 7 8 9 10 11",
+      "nested": false,
+      "selector": "#__BVID__239",
+      "site": "gozayaan.com",
+      "value": "5"
+    },
+    {
+      "fieldType": "dropdown",
+      "name": "2 3 4 5 6 7 8 9 10 11",
+      "nested": false,
+      "selector": "#__BVID__240",
+      "site": "gozayaan.com",
+      "value": "8"
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_8",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    },
+    {
+      "fieldType": "stepper",
+      "name": "stepper_9",
+      "nested": false,
+      "selector": "button.btn.adjust.btn-link",
+      "site": "gozayaan.com",
+      "value": ""
+    }
+  ]
+}
