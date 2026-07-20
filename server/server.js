@@ -13,7 +13,7 @@ const app = express();
 app.use(express.json({ limit: '5mb' }));
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/', (req, res) => res.redirect('/dashboard.html'));
+app.get('/', (req, res) => res.redirect('/index.html'));
 
 // A run must never hang the request forever — if the headless browser wedges
 // (page never settles, a wait condition never resolves), the client needs an
