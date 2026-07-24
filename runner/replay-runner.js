@@ -17,7 +17,8 @@ const {
   resolveStepForReplay,
 } = require('../extension/lib/replay');
 const { scrapeCards } = require('./scrape');
-const { structureResults } = require('./structure');
+const { structureResults, loadEnv } = require('./structure');
+const { shouldRescue, extractFromPage } = require('./pageExtract');
 const { dismissPopups } = require('./popups');
 
 function finalUrl(recording) {
@@ -230,6 +231,7 @@ async function replay(recording, newValues = {}, opts = {}) {
         envDir: opts.envDir || process.cwd(),
         ai: opts.ai,
         values: newValues,
+        notes: opts.notes,
         domain: (() => {
           try {
             return new URL(page.url()).hostname;
@@ -241,6 +243,36 @@ async function replay(recording, newValues = {}, opts = {}) {
       result.results = structured.results;
       result.engine = structured.engine;
       if (opts.includeRaw) result.rawCards = cards;
+
+      // Generalization rescue: the card detector above only recognizes results
+      // shaped as a link wrapping an image + digit-bearing text. When that
+      // shape doesn't fit a site (text-only lists, tables, thumbnail-less
+      // job/news/wiki results, search engines) it returns nothing, a single
+      // over-climbed blob, or duplicates. In those cases fall back to
+      // extracting from the whole rendered page via LLM, which assumes no
+      // structure. Only runs on AI runs that came up short — tuned sites keep
+      // their fast, free path untouched. Best-effort: any failure leaves the
+      // original results in place.
+      if (opts.ai && shouldRescue(result.results, maxCards)) {
+        loadEnv(opts.envDir || process.cwd());
+        const key = process.env.DEEPSEEK_API_KEY;
+        if (key) {
+          try {
+            const rescued = await extractFromPage(page, {
+              apiKey: key,
+              values: newValues,
+              notes: opts.notes,
+              maxCards,
+            });
+            if (rescued.results.length > result.results.length) {
+              result.results = rescued.results.slice(0, maxCards);
+              result.engine = rescued.engine;
+            }
+          } catch {
+            /* keep original results — rescue is best-effort */
+          }
+        }
+      }
     }
 
     if (opts.screenshotPath) {

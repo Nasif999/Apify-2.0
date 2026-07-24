@@ -122,6 +122,7 @@ async function createAutomation({ name, recording, scanForMissedFields: wantScan
     scanWarnings,
     price: quoteRate(recording).price,
     runs: [],
+    extractionNotes: [],
   };
   list.push(automation);
   save(list);
@@ -165,6 +166,19 @@ function getRun(automationId, runId) {
   return (a.runs || []).find((r) => r.id === runId) || null;
 }
 
+// Persist a user-confirmed extraction fix so every future run of this
+// automation applies it automatically (see notesPrefix in structure.js) --
+// the whole point of the report flow is that a fix compounds instead of
+// staying a one-off patch on a single run's output.
+function addExtractionNote(automationId, note) {
+  const list = load();
+  const a = list.find((x) => x.id === automationId);
+  if (!a) return null;
+  a.extractionNotes = [...(a.extractionNotes || []), note];
+  save(list);
+  return a.extractionNotes;
+}
+
 function deleteAutomation(id) {
   const list = load();
   const next = list.filter((a) => a.id !== id);
@@ -180,6 +194,7 @@ module.exports = {
   listAutomations,
   addRun,
   getRun,
+  addExtractionNote,
   deleteAutomation,
   maskKey,
   isSuspiciousClassification,

@@ -6,6 +6,8 @@ const {
   parseKind,
   buildKindPrompt,
   buildInformationalPrompt,
+  notesPrefix,
+  buildFixPrompt,
 } = require('../runner/structure');
 
 test('heuristicParse pulls name/price/rating from a real booking card', () => {
@@ -154,4 +156,33 @@ test('buildInformationalPrompt includes the user\'s search values and the cards 
 test('buildInformationalPrompt works with no search values given', () => {
   const prompt = buildInformationalPrompt([{ text: 'x' }], undefined);
   assert.ok(prompt.includes('x'));
+});
+
+test('notesPrefix: empty string when there are no notes', () => {
+  assert.strictEqual(notesPrefix(undefined), '');
+  assert.strictEqual(notesPrefix([]), '');
+});
+
+test('notesPrefix: renders each note as a bullet', () => {
+  const out = notesPrefix(['price is in the .rate span', 'always include amenities']);
+  assert.ok(out.includes('price is in the .rate span'));
+  assert.ok(out.includes('always include amenities'));
+});
+
+test('buildFixPrompt includes the complaint and the cards', () => {
+  const prompt = buildFixPrompt([{ text: 'Hotel X' }], 'no price shown', [], []);
+  assert.ok(prompt.includes('no price shown'));
+  assert.ok(prompt.includes('Hotel X'));
+});
+
+test('buildFixPrompt includes prior results when given, omits the block when not', () => {
+  const withPrior = buildFixPrompt([{ text: 'x' }], 'missing rating', [{ name: 'x', rating: null }], []);
+  assert.ok(withPrior.includes('"rating": null') || withPrior.includes('rating'));
+  const withoutPrior = buildFixPrompt([{ text: 'x' }], 'missing rating', [], []);
+  assert.ok(!withoutPrior.includes('Previous extraction'));
+});
+
+test('buildFixPrompt includes known notes for this automation when given', () => {
+  const prompt = buildFixPrompt([{ text: 'x' }], 'missing amenities', [], ['always include amenities']);
+  assert.ok(prompt.includes('always include amenities'));
 });

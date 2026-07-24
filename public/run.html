@@ -27,6 +27,13 @@
   .badge{background:#1b2130;border:1px solid var(--line);color:var(--muted);font-size:11px;padding:3px 9px;border-radius:20px;white-space:nowrap}
   .badge.rating{color:#ffc94d;border-color:#4a3a17}
   .badge.price{color:var(--accent);border-color:#2a3a66;font-weight:700}
+  .report{margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+  .report textarea{width:100%;min-height:60px;background:#0b0d12;border:1px solid var(--line);border-radius:8px;color:var(--fg);padding:9px 10px;font:13px/1.4 system-ui,sans-serif;resize:vertical}
+  .report button{background:var(--accent);border:0;color:#fff;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;margin-top:8px}
+  .report button.ghost{background:transparent;border:1px solid var(--line);color:var(--fg)}
+  .report .msg{font-size:12px;margin-top:8px;color:var(--muted)}
+  .report .msg.ok{color:#33d17a}
+  .report .msg.err{color:#ff5b6e}
 </style>
 </head>
 <body>
@@ -40,6 +47,17 @@
     <div id="warnbox" style="display:none;background:#3a2410;border:1px solid #6b4a1a;color:#ffb74d;border-radius:8px;padding:10px 12px;font-size:12px;margin:10px 0">⚠ <span id="warntext"></span></div>
     <div id="srclink" style="margin-bottom:12px"></div>
     <div id="results"></div>
+    <div class="report">
+      <button class="ghost" id="reportToggle">Something's wrong?</button>
+      <div id="reportForm" style="display:none;margin-top:10px">
+        <textarea id="complaint" placeholder="What's missing or wrong? e.g. no price shown, missing amenities"></textarea>
+        <div>
+          <button id="reportSubmit">Preview fix</button>
+        </div>
+        <div id="reportMsg" class="msg"></div>
+        <div id="fixPreview"></div>
+      </div>
+    </div>
   </div>
 </main>
 <script>
@@ -68,23 +86,11 @@ function badges(r){
   });
 }
 
-function render(run){
-  const short = run.outputCount && run.resultCount < run.outputCount
-    ? ` — no more results could be found (asked for ${run.outputCount})`
-    : '';
-  $('meta').textContent = `${run.resultCount} results · ${run.mode} · ${new Date(run.at).toLocaleString()} · ৳${run.price}${short}`;
-  if(run.warning){
-    $('warnbox').style.display = 'block';
-    $('warntext').textContent = run.warning + ' Treat this run\'s output with caution.';
-  }
-  if(run.finalUrl){
-    $('srclink').innerHTML = `<span class="muted">Source: </span><a href="${run.finalUrl}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;word-break:break-all">${run.finalUrl}</a>`;
-  }
-  const box = $('results');
-  if(!run.results || !run.results.length){ box.innerHTML = '<div class="muted">No results.</div>'; return; }
+function renderCards(box, results){
+  if(!results || !results.length){ box.innerHTML = '<div class="muted">No results.</div>'; return; }
   box.className = 'grid';
   box.innerHTML = '';
-  for(const r of run.results){
+  for(const r of results){
     const card = document.createElement(r.url ? 'a' : 'div');
     if(r.url){ card.href = r.url; card.target = '_blank'; card.rel = 'noopener'; }
     card.className = 'rcard';
@@ -104,10 +110,83 @@ function render(run){
   }
 }
 
+function render(run){
+  const short = run.outputCount && run.resultCount < run.outputCount
+    ? ` — no more results could be found (asked for ${run.outputCount})`
+    : '';
+  $('meta').textContent = `${run.resultCount} results · ${run.mode} · ${new Date(run.at).toLocaleString()} · ৳${run.price}${short}`;
+  if(run.warning){
+    $('warnbox').style.display = 'block';
+    $('warntext').textContent = run.warning + ' Treat this run\'s output with caution.';
+  }
+  if(run.finalUrl){
+    $('srclink').innerHTML = `<span class="muted">Source: </span><a href="${run.finalUrl}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;word-break:break-all">${run.finalUrl}</a>`;
+  }
+  renderCards($('results'), run.results);
+}
+
+let apiKey = null;
+
 fetch(`/api/automations/${id}/runs/${runId}`)
   .then(r => r.ok ? r.json() : Promise.reject(new Error('Not found')))
   .then(render)
   .catch(e => { $('meta').textContent = 'Error: '+e.message; });
+
+fetch(`/api/automations/${id}`)
+  .then(r => r.ok ? r.json() : null)
+  .then(a => { if(a) apiKey = a.apiKey; })
+  .catch(() => {});
+
+$('reportToggle').addEventListener('click', () => {
+  const form = $('reportForm');
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+});
+
+let lastFix = null;
+
+$('reportSubmit').addEventListener('click', async () => {
+  const complaint = $('complaint').value.trim();
+  const msg = $('reportMsg'); msg.textContent=''; msg.className='msg';
+  $('fixPreview').innerHTML=''; lastFix = null;
+  if(!complaint){ msg.textContent = 'Describe what\'s wrong first.'; msg.className='msg err'; return; }
+  if(!apiKey){ msg.textContent = 'Still loading — try again in a moment.'; msg.className='msg err'; return; }
+  msg.textContent = 'Re-checking with AI…';
+  $('reportSubmit').disabled = true;
+  try{
+    const res = await fetch(`/api/automations/${id}/runs/${runId}/report`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Api-Key':apiKey},
+      body: JSON.stringify({ complaint })
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error+(data.detail?(': '+data.detail):''); msg.className='msg err'; return; }
+    lastFix = { complaint, results: data.results };
+    msg.innerHTML = 'Here\'s the corrected extraction — does this look right? ';
+    const yes = document.createElement('button');
+    yes.textContent = 'Yes, save this fix';
+    yes.onclick = confirmFix;
+    msg.appendChild(yes);
+    const box = document.createElement('div');
+    box.style.marginTop = '10px';
+    $('fixPreview').appendChild(box);
+    renderCards(box, data.results);
+  } catch(e){ msg.textContent = 'Error: '+e.message; msg.className='msg err'; }
+  finally{ $('reportSubmit').disabled = false; }
+});
+
+async function confirmFix(){
+  const msg = $('reportMsg');
+  if(!lastFix) return;
+  const res = await fetch(`/api/automations/${id}/report-confirm`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-Api-Key':apiKey},
+    body: JSON.stringify({ complaint: lastFix.complaint })
+  });
+  const data = await res.json();
+  if(!res.ok){ msg.textContent = data.error; msg.className='msg err'; return; }
+  msg.textContent = 'Saved — every future run of this automation now applies this fix.';
+  msg.className = 'msg ok';
+}
 </script>
 </body>
 </html>

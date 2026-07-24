@@ -203,10 +203,21 @@ async function classifySiteKind(sample, apiKey, opts = {}) {
 // Folding in the user's search values (whatever they typed/picked to run
 // this automation) lets the AI target the facts relevant to that search,
 // instead of guessing from the cards alone.
-function buildInformationalPrompt(cards, values) {
+// A per-automation list of user-confirmed corrections (see buildFixPrompt) --
+// plain free-text notes, not a DSL, so they can express anything a report
+// covers ("price is in .rate not .price", "always include amenities") without
+// us having to model every possible fix shape up front.
+function notesPrefix(notes) {
+  return notes && notes.length
+    ? `Known corrections for this site (apply them):\n${notes.map((n) => `- ${n}`).join('\n')}\n\n`
+    : '';
+}
+
+function buildInformationalPrompt(cards, values, notes) {
   const queryContext =
     values && Object.keys(values).length ? `The user searched for: ${JSON.stringify(values)}.\n\n` : '';
   return (
+    notesPrefix(notes) +
     queryContext +
     'The following are scraped fragments from an INFORMATIONAL page (not a shopping/listing results ' +
     'page) -- e.g. a biography, encyclopedia entry, news article, or cast/crew page. Extract the facts ' +
@@ -221,7 +232,7 @@ function buildInformationalPrompt(cards, values) {
 async function callDeepSeekInformational(cards, values, apiKey, opts = {}) {
   const content = await chatJSON(
     'You extract information relevant to a search query and reply with JSON only.',
-    buildInformationalPrompt(cards, values),
+    buildInformationalPrompt(cards, values, opts.notes),
     apiKey,
     opts
   );
@@ -232,6 +243,7 @@ async function callDeepSeekInformational(cards, values, apiKey, opts = {}) {
 
 async function callDeepSeek(cards, apiKey, opts = {}) {
   const prompt =
+    notesPrefix(opts.notes) +
     'From the following list of scraped result cards, extract each real result as ' +
     'an object with keys: name, subtitle, price, rating, image, url, and metrics ' +
     '(an object of any other notable numeric facts you find, e.g. views, ' +
@@ -244,6 +256,41 @@ async function callDeepSeek(cards, apiKey, opts = {}) {
   const arr = extractJsonArray(content);
   if (!arr) throw new Error('DeepSeek returned no parseable JSON array');
   return arr;
+}
+
+// Self-service fix loop: a user reports a problem with a completed run's
+// output ("no price shown", "missing amenities"). Re-extracts from that run's
+// raw cards with the complaint (and, if given, the earlier bad result) as
+// extra context. Once the user confirms the corrected output looks right, the
+// complaint is saved as a note (see notesPrefix) so every future run on that
+// automation gets it applied automatically -- fixing a new site gets faster
+// each time instead of requiring a developer to notice and patch it.
+function buildFixPrompt(cards, complaint, priorResults, notes) {
+  const priorBlock =
+    priorResults && priorResults.length
+      ? `Previous extraction (what the user says is wrong): ${JSON.stringify(priorResults, null, 2)}\n\n`
+      : '';
+  return (
+    notesPrefix(notes) +
+    `A user reported an issue with data extracted from this site: "${complaint}"\n\n` +
+    priorBlock +
+    'Re-extract the following scraped cards as a JSON array of objects with keys: name, subtitle, ' +
+    'price, rating, image, url, and metrics (any other relevant facts as key/value pairs). Fix the ' +
+    'reported issue. Return ONLY a JSON array, no prose.\n\n' +
+    JSON.stringify(cards, null, 2)
+  );
+}
+
+async function callDeepSeekFix(cards, complaint, priorResults, notes, apiKey, opts = {}) {
+  const content = await chatJSON(
+    'You fix data-extraction issues reported by a user and reply with JSON only.',
+    buildFixPrompt(cards, complaint, priorResults, notes),
+    apiKey,
+    opts
+  );
+  const arr = extractJsonArray(content);
+  if (!arr) throw new Error('DeepSeek returned no parseable JSON array');
+  return normalizeResults(arr);
 }
 
 // Structure raw cards → normalized rows. Returns { results, engine }.
@@ -288,4 +335,7 @@ module.exports = {
   parseKind,
   buildInformationalPrompt,
   callDeepSeekInformational,
+  notesPrefix,
+  buildFixPrompt,
+  callDeepSeekFix,
 };

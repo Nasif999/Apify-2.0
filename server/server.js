@@ -8,6 +8,7 @@ const store = require('./store');
 const { quoteRate } = require('./pricing');
 const { replay } = require('../runner/replay-runner');
 const { assessResults } = require('../runner/verify');
+const { callDeepSeekFix, loadEnv } = require('../runner/structure');
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
@@ -90,7 +91,10 @@ app.post('/api/automations/:id/run', async (req, res) => {
 
   const values = (req.body && req.body.values) || {};
   const outputCount = Number((req.body && req.body.outputCount) || 10);
-  const useAi = !!(req.body && req.body.ai);
+  // AI on by default — it's what lets extraction generalize to sites we never
+  // tuned for (structuring + the whole-page rescue in replay-runner). Callers
+  // can still opt out with { ai: false } for a free heuristic-only run.
+  const useAi = !(req.body && req.body.ai === false);
   const price = quoteRate(a.recording, { outputCount }).price;
 
   try {
@@ -100,6 +104,8 @@ app.post('/api/automations/:id/run', async (req, res) => {
         ai: useAi,
         maxCards: outputCount,
         envDir: path.join(__dirname, '..'),
+        includeRaw: true,
+        notes: a.extractionNotes || [],
       }),
       RUN_TIMEOUT_MS,
       'Run'
@@ -120,6 +126,7 @@ app.post('/api/automations/:id/run', async (req, res) => {
       results: result.results || [],
       dismissedPopups: result.dismissedPopups || 0,
       warning: check.suspicious ? check.reason : null,
+      rawCards: result.rawCards || null,
     });
     res.json({
       runId: run.id,
@@ -143,6 +150,61 @@ app.get('/api/automations/:id/runs/:runId', (req, res) => {
   const run = store.getRun(req.params.id, req.params.runId);
   if (!run) return res.status(404).json({ error: 'Not found' });
   res.json(run);
+});
+
+// --- Self-service extraction fixes (see structure.js: buildFixPrompt, notesPrefix) ---
+
+function requireApiKey(req, res, a) {
+  const key = req.get('X-Api-Key') || bearer(req.get('Authorization'));
+  if (!key || key !== a.apiKey) {
+    res.status(401).json({ error: 'Missing or invalid API key' });
+    return false;
+  }
+  return true;
+}
+
+// Preview a corrected extraction for one run without persisting anything —
+// the user reviews it before the fix becomes permanent (report-confirm below).
+app.post('/api/automations/:id/runs/:runId/report', async (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+
+  const run = store.getRun(a.id, req.params.runId);
+  if (!run) return res.status(404).json({ error: 'Run not found' });
+  if (!run.rawCards) {
+    return res.status(400).json({ error: 'This run has no raw data captured. Re-run the automation, then report.' });
+  }
+
+  const complaint = (req.body && req.body.complaint) || '';
+  if (!complaint.trim()) return res.status(400).json({ error: 'complaint is required' });
+
+  loadEnv(path.join(__dirname, '..'));
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) return res.status(400).json({ error: 'DEEPSEEK_API_KEY is not configured on this server.' });
+
+  try {
+    const results = await callDeepSeekFix(run.rawCards, complaint, run.results, a.extractionNotes || [], key, {
+      envDir: path.join(__dirname, '..'),
+    });
+    res.json({ results });
+  } catch (e) {
+    res.status(500).json({ error: 'Fix failed', detail: e.message });
+  }
+});
+
+// Confirms a reported fix actually looked right — saves the complaint as a
+// standing note so every future run of this automation applies it too.
+app.post('/api/automations/:id/report-confirm', (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+
+  const complaint = (req.body && req.body.complaint) || '';
+  if (!complaint.trim()) return res.status(400).json({ error: 'complaint is required' });
+
+  const notes = store.addExtractionNote(a.id, complaint.trim());
+  res.json({ ok: true, notes });
 });
 
 function bearer(auth) {
