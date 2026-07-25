@@ -116,6 +116,16 @@
   .dash-btn:hover{background:var(--accent);box-shadow:1px 1px 0px 0px var(--line);transform:translate(2px,2px)}
   #nav-avatar{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--line);background:linear-gradient(135deg,var(--accent),var(--fg));display:flex;align-items:center;justify-content:center;font:700 16px 'Kalam',cursive;color:#fff;flex-shrink:0;cursor:pointer;box-shadow:2px 2px 0px 0px var(--line);transition:transform .1s,box-shadow .1s}
   #nav-avatar:hover{transform:translate(1px,1px);box-shadow:1px 1px 0px 0px var(--line)}
+  #nav-bell{position:relative;width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;font-size:17px;cursor:pointer;box-shadow:2px 2px 0px 0px var(--line);transition:transform .1s,box-shadow .1s}
+  #nav-bell:hover{transform:translate(1px,1px);box-shadow:1px 1px 0px 0px var(--line);background:var(--bg)}
+  #nav-bell .ping{position:absolute;top:-2px;right:-2px;width:11px;height:11px;border-radius:50%;background:var(--accent);border:2px solid var(--bg);display:none}
+  #nav-bell.has-updates .ping{display:block}
+  #bell-menu{display:none;position:absolute;top:48px;right:0;width:250px;background:#fff;border:2px solid var(--line);border-radius:var(--wobblyMd);box-shadow:var(--shadowLg);overflow:hidden;z-index:200;text-align:left}
+  #bell-menu .head{padding:10px 16px;border-bottom:2px dashed var(--line);font:700 13px 'Kalam',cursive}
+  #bell-menu .item{padding:11px 16px;font:13.5px 'Patrick Hand',cursive;color:var(--fg);border-bottom:1px dashed #e2ddd0}
+  #bell-menu .item:last-child{border-bottom:0}
+  #bell-menu .item b{display:block;font:700 13px 'Kalam',cursive;margin-bottom:2px}
+  #bell-menu .item span{color:var(--muted);font-size:11.5px}
   #avatar-menu{display:none;position:absolute;top:48px;right:0;width:230px;background:#fff;border:2px solid var(--line);border-radius:var(--wobblyMd);box-shadow:var(--shadowLg);overflow:hidden;z-index:200;text-align:left}
   #avatar-menu .row{padding:12px 16px;border-bottom:2px dashed var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
   #avatar-menu-email{flex:1;min-width:0;font:14px 'Patrick Hand',cursive;font-weight:700;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -158,6 +168,15 @@
   </div>
   <div id="nav-account">
     <a class="dash-btn" href="/dashboard.html">Dashboard</a>
+    <div id="nav-bell" class="has-updates">
+      🔔<span class="ping"></span>
+      <div id="bell-menu">
+        <div class="head">Updates</div>
+        <div class="item"><b>Field editor is here</b><span>Hide junk fields or turn them into checkboxes.</span></div>
+        <div class="item"><b>Faster replays</b><span>Runs now finish noticeably quicker.</span></div>
+        <div class="item"><b>Chrome extension v0.1</b><span>Record once, replay from any device.</span></div>
+      </div>
+    </div>
     <div id="nav-avatar">A</div>
     <div id="avatar-menu">
       <div class="row">
@@ -452,6 +471,21 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('click', (e) => {
       if (avatarMenu.style.display === 'block' && !avatarMenu.contains(e.target) && e.target !== navAvatar) {
         avatarMenu.style.display = 'none';
+      }
+    });
+  }
+
+  const navBell = document.getElementById('nav-bell');
+  const bellMenu = document.getElementById('bell-menu');
+  if (navBell && bellMenu) {
+    navBell.addEventListener('click', (e) => {
+      e.stopPropagation();
+      bellMenu.style.display = bellMenu.style.display === 'block' ? 'none' : 'block';
+      navBell.classList.remove('has-updates');
+    });
+    document.addEventListener('click', (e) => {
+      if (bellMenu.style.display === 'block' && !bellMenu.contains(e.target) && e.target !== navBell) {
+        bellMenu.style.display = 'none';
       }
     });
   }
