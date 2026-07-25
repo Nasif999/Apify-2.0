@@ -111,10 +111,11 @@
   footer{text-align:center;padding:24px;color:var(--muted);font-size:13px}
 
   /* ACCOUNT */
-  #nav-account{display:none;align-items:center;gap:12px;position:relative}
-  .dash-btn{background:var(--fg);color:#fff;text-decoration:none;border:2px solid var(--line);padding:10px 20px;border-radius:var(--wobbly);font:14px 'Patrick Hand',cursive;font-weight:700;box-shadow:var(--shadow);transition:transform .1s,box-shadow .1s;cursor:pointer}
-  .dash-btn:hover{background:var(--accent);box-shadow:2px 2px 0px 0px var(--line);transform:translate(2px,2px)}
-  #nav-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--line);background:linear-gradient(135deg,var(--accent),var(--fg));display:flex;align-items:center;justify-content:center;font:700 15px 'Kalam',cursive;color:#fff;flex-shrink:0;cursor:pointer}
+  #nav-account{display:none;align-items:center;gap:14px;position:relative}
+  .dash-btn{background:var(--fg);color:#fff;text-decoration:none;border:2px solid var(--line);padding:9px 22px;border-radius:9999px;font:14px 'Patrick Hand',cursive;font-weight:700;box-shadow:3px 3px 0px 0px var(--line);transition:transform .1s,box-shadow .1s;cursor:pointer;white-space:nowrap}
+  .dash-btn:hover{background:var(--accent);box-shadow:1px 1px 0px 0px var(--line);transform:translate(2px,2px)}
+  #nav-avatar{width:40px;height:40px;border-radius:50%;border:2.5px solid var(--line);background:linear-gradient(135deg,var(--accent),var(--fg));display:flex;align-items:center;justify-content:center;font:700 16px 'Kalam',cursive;color:#fff;flex-shrink:0;cursor:pointer;box-shadow:2px 2px 0px 0px var(--line);transition:transform .1s,box-shadow .1s}
+  #nav-avatar:hover{transform:translate(1px,1px);box-shadow:1px 1px 0px 0px var(--line)}
   #avatar-menu{display:none;position:absolute;top:48px;right:0;width:230px;background:#fff;border:2px solid var(--line);border-radius:var(--wobblyMd);box-shadow:var(--shadowLg);overflow:hidden;z-index:200;text-align:left}
   #avatar-menu .row{padding:12px 16px;border-bottom:2px dashed var(--line);display:flex;align-items:center;justify-content:space-between;gap:8px}
   #avatar-menu-email{flex:1;min-width:0;font:14px 'Patrick Hand',cursive;font-weight:700;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -146,9 +147,12 @@
     <a href="#stats">Stats</a>
     <a href="#pricing">Pricing</a>
     <a href="#faq">FAQ</a>
-    <a href="/dashboard.html">Marketplace</a>
+    <span style="position:relative;cursor:default;color:var(--muted)">Marketplace
+      <span style="position:absolute;top:-10px;right:-34px;background:var(--accent);color:#fff;font:9px 'Kalam',cursive;padding:2px 6px;border:1.5px solid var(--line);border-radius:9999px;white-space:nowrap;transform:rotate(6deg)">soon</span>
+    </span>
   </nav>
   <div id="nav-signedout" style="display:flex;align-items:center;gap:12px">
+    <a href="/downloads/apify-extension.zip" download style="font:14px 'Patrick Hand',cursive;font-weight:700;color:var(--fg);text-decoration:none">⬇ Extension</a>
     <a id="nav-signin" href="/dashboard.html" data-open-auth style="font:14px 'Patrick Hand',cursive;font-weight:700;color:var(--fg);text-decoration:none">Sign In</a>
     <a id="nav-cta" class="get-started" href="/dashboard.html" data-open-auth>Get Started</a>
   </div>

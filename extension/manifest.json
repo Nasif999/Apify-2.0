@@ -17,7 +17,7 @@
       "all_frames": false
     },
     {
-      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html", "https://fast-regions-float.loca.lt/dashboard.html"],
+      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html", "https://apify-2-0-git-main-mhnasifkhan-1364s-projects.vercel.app/dashboard.html"],
       "js": ["handoff.js"],
       "run_at": "document_idle"
     }
