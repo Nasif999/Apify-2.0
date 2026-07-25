@@ -4,7 +4,7 @@ const KEY_ACTIVE = 'apify_active';
 const KEY_REC = 'apify_recording';
 // Single place to point the extension at whichever Apify instance is live —
 // swap this when moving off localhost (tunnel URL, then real domain).
-const APIFY_BASE_URL = 'https://apify-2-0-git-main-mhnasifkhan-1364s-projects.vercel.app';
+const APIFY_BASE_URL = 'https://apify-2-0.vercel.app';
 
 const $ = (id) => document.getElementById(id);
 

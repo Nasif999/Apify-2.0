@@ -47,6 +47,24 @@
   .listbar label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);margin:0}
   button.danger{background:var(--accent);color:#fff}
   button:disabled{opacity:.4;cursor:not-allowed}
+
+  /* AUTH GATE */
+  main{display:none}
+  #gate-msg{display:none;text-align:center;color:var(--muted);padding:60px 24px}
+  #auth-overlay{display:none;position:fixed;inset:0;z-index:1000;align-items:center;justify-content:center;background:rgba(26,26,26,.5)}
+  .auth-card{position:relative;width:min(380px,92vw);background:var(--bg);border:3px solid var(--line);border-radius:var(--wobblyMd);padding:32px 28px;box-shadow:var(--shadowLg)}
+  #auth-close{position:absolute;top:12px;right:14px;background:none;border:none;box-shadow:none;color:var(--muted);font-size:22px;cursor:pointer;line-height:1;padding:0;font-family:'Kalam',cursive}
+  #auth-close:hover{background:none;color:var(--accent);transform:none}
+  .auth-card .brand{text-align:center;font:700 20px 'Kalam',cursive;margin-bottom:6px}
+  .auth-card .brand span{color:var(--accent)}
+  #auth-subtitle{text-align:center;font-size:13px;color:var(--muted);margin:0 0 22px}
+  #auth-form input{margin-bottom:12px}
+  #auth-error{display:none;color:var(--accent);font-size:12.5px;margin:4px 0 0;font-weight:700}
+  #auth-submit{width:100%;margin-top:14px;background:var(--fg);color:#fff}
+  #auth-submit:hover{background:var(--accent)}
+  .auth-toggle{text-align:center;font-size:12.5px;color:var(--muted);margin:18px 0 0}
+  #auth-toggle{color:var(--accent);font-weight:700;text-decoration:none}
+  .stash-note{display:none;margin-top:10px;text-align:center;font-size:12.5px;color:var(--accent);font-weight:700}
 </style>
 </head>
 <body>
@@ -80,6 +98,141 @@
   </div>
   <div id="list" class="grid"></div>
 </main>
+
+<div id="gate-msg">Checking your account…</div>
+
+<div id="auth-overlay">
+  <div class="auth-card">
+    <button id="auth-close" type="button" aria-label="Close">×</button>
+    <div class="brand">Apif<span>y</span></div>
+    <p id="auth-subtitle">Sign in to open your dashboard</p>
+    <form id="auth-form">
+      <input id="auth-email" type="email" required placeholder="Email address" />
+      <input id="auth-password" type="password" required minlength="6" placeholder="Password" />
+      <p id="auth-error"></p>
+      <button id="auth-submit" type="submit">Sign In</button>
+    </form>
+    <p class="stash-note" id="stashNote">Your recording is saved — it'll be waiting after you sign in.</p>
+    <p class="auth-toggle">
+      <span id="auth-toggle-text">No account?</span>
+      <a href="#" id="auth-toggle">Create one</a>
+    </p>
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+  import {
+    getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged
+  } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+
+  const app = initializeApp({
+    apiKey: "AIzaSyC1nIXDhMWWwsGmkKbsXR6QX8GIKjZRaDo",
+    authDomain: "apify-f44d7.firebaseapp.com",
+    projectId: "apify-f44d7",
+    storageBucket: "apify-f44d7.firebasestorage.app",
+    messagingSenderId: "613416959254",
+    appId: "1:613416959254:web:c79a43b65ac279f8246437",
+    measurementId: "G-0C48W0J8QT"
+  });
+  const auth = getAuth(app);
+
+  const FRIENDLY_ERRORS = {
+    'auth/invalid-email': 'That email address looks invalid.',
+    'auth/user-not-found': 'No account with that email. Try creating one.',
+    'auth/wrong-password': 'Wrong password.',
+    'auth/invalid-credential': 'Wrong email or password.',
+    'auth/email-already-in-use': 'An account with that email already exists.',
+    'auth/weak-password': 'Password must be at least 6 characters.',
+    'auth/too-many-requests': 'Too many attempts. Try again later.'
+  };
+
+  window.apifyAuth = async function (mode, email, password) {
+    try {
+      if (mode === 'signup') await createUserWithEmailAndPassword(auth, email, password);
+      else await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      throw new Error(FRIENDLY_ERRORS[err.code] || err.message);
+    }
+  };
+
+  // The gate: main stays hidden until Firebase says who this is. A pending
+  // recording is already stashed in sessionStorage by then, so signing in
+  // (or reloading through the sign-in) never loses it.
+  onAuthStateChanged(auth, (user) => {
+    const main = document.querySelector('main');
+    const gate = document.getElementById('gate-msg');
+    const overlay = document.getElementById('auth-overlay');
+    window.apifyUser = user || null;
+    if (user) {
+      overlay.style.display = 'none';
+      gate.style.display = 'none';
+      main.style.display = 'block';
+      if (typeof window.restorePendingRecording === 'function') window.restorePendingRecording();
+    } else {
+      main.style.display = 'none';
+      gate.style.display = 'none';
+      overlay.style.display = 'flex';
+      document.getElementById('stashNote').style.display =
+        sessionStorage.getItem('apify_stashed_recording') ? 'block' : 'none';
+    }
+  });
+</script>
+
+<script>
+document.getElementById('gate-msg').style.display = 'block';
+
+(() => {
+  const form = document.getElementById('auth-form');
+  const emailEl = document.getElementById('auth-email');
+  const passEl = document.getElementById('auth-password');
+  const errEl = document.getElementById('auth-error');
+  const submitBtn = document.getElementById('auth-submit');
+  const toggleLink = document.getElementById('auth-toggle');
+  const toggleText = document.getElementById('auth-toggle-text');
+  const subtitle = document.getElementById('auth-subtitle');
+  let mode = 'signin';
+
+  document.getElementById('auth-close').addEventListener('click', () => {
+    window.location.href = '/index.html';
+  });
+
+  toggleLink.addEventListener('click', (e) => {
+    e.preventDefault();
+    mode = mode === 'signin' ? 'signup' : 'signin';
+    if (mode === 'signup') {
+      subtitle.textContent = 'Create your account';
+      submitBtn.textContent = 'Create Account';
+      toggleText.textContent = 'Already have an account?';
+      toggleLink.textContent = 'Sign in';
+    } else {
+      subtitle.textContent = 'Sign in to open your dashboard';
+      submitBtn.textContent = 'Sign In';
+      toggleText.textContent = 'No account?';
+      toggleLink.textContent = 'Create one';
+    }
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    errEl.style.display = 'none';
+    submitBtn.disabled = true;
+    submitBtn.textContent = mode === 'signup' ? 'Creating…' : 'Signing in…';
+    try {
+      if (typeof window.apifyAuth !== 'function') throw new Error('Auth not ready yet — try again in a second.');
+      await window.apifyAuth(mode, emailEl.value.trim(), passEl.value);
+      // onAuthStateChanged reveals the dashboard and restores the recording.
+    } catch (err) {
+      errEl.textContent = err.message || 'Something went wrong.';
+      errEl.style.display = 'block';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+    }
+  });
+})();
+</script>
+
 <script>
 const $ = (id) => document.getElementById(id);
 
@@ -146,10 +299,24 @@ function applyPendingRecording(doc, recording){
   doc.getElementById('name').focus();
 }
 
+// The extension clears its copy the moment it hands off, so stash ours before
+// anything else -- a signed-out visitor still has to get through the auth gate,
+// and that must not cost them the recording they just made.
+const KEY_STASH = 'apify_stashed_recording';
+
+window.restorePendingRecording = function(){
+  const raw = sessionStorage.getItem(KEY_STASH);
+  if (!raw) return;
+  try { applyPendingRecording(document, JSON.parse(raw)); }
+  catch { sessionStorage.removeItem(KEY_STASH); }
+};
+
 window.addEventListener('message', (e) => {
   if (e.source !== window || !e.data || e.data.source !== 'apify-extension') return;
   if (e.data.type !== 'pending-recording') return;
-  applyPendingRecording(document, e.data.recording);
+  sessionStorage.setItem(KEY_STASH, JSON.stringify(e.data.recording));
+  if (window.apifyUser) window.restorePendingRecording();
+  else document.getElementById('stashNote').style.display = 'block';
 });
 
 $('create').addEventListener('click', async () => {
@@ -180,7 +347,9 @@ $('create').addEventListener('click', async () => {
     const data = await res.json();
     if(!res.ok){ msg.textContent = data.error || 'Failed'; msg.className='msg err'; return; }
     msg.textContent = 'Created ✓'; msg.className='msg ok';
+    sessionStorage.removeItem(KEY_STASH);
     $('name').value=''; $('recording').value=''; $('scanForMissedFields').checked=false;
+    $('recordingField').style.display = '';
     loadList();
   }catch(e){
     msg.textContent = 'Failed: '+e.message; msg.className='msg err';
