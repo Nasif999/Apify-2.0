@@ -17,7 +17,7 @@
       "all_frames": false
     },
     {
-      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html", "https://apify-2-0.vercel.app/dashboard.html"],
+      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html", "https://srv1311307.hstgr.cloud/dashboard.html", "http://srv1311307.hstgr.cloud/dashboard.html"],
       "js": ["handoff.js"],
       "run_at": "document_idle"
     }
