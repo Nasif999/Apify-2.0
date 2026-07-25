@@ -4,7 +4,9 @@ const KEY_ACTIVE = 'apify_active';
 const KEY_REC = 'apify_recording';
 // Single place to point the extension at whichever Apify instance is live —
 // swap this when moving off localhost (tunnel URL, then real domain).
-const APIFY_BASE_URL = 'https://srv1311307.hstgr.cloud';
+// Local dev. Swap to https://srv1311307.hstgr.cloud once the VPS has its
+// TLS cert; the handoff content script already matches both hosts.
+const APIFY_BASE_URL = 'http://localhost:3000';
 
 const $ = (id) => document.getElementById(id);
 
