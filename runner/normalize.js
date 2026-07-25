@@ -39,17 +39,29 @@ function isBareDurationFragment(r) {
   return hasDuration && !hasOtherSignal;
 }
 
+// Per-item type, decided by the extractor (AI or heuristic), not the whole
+// run: 'card' (default) is a comparable linkable item and requires a url,
+// exactly as before. 'text' is a fact/row with no natural per-item link (a
+// data table row, an informational fact) — only a name is required, and it
+// dedupes by name instead of url. Deciding this per item (rather than
+// forcing one shape on the entire run) is what lets a page that mixes real
+// linkable results with a url-less fact (or vice versa) keep both instead of
+// one shape silently eating the other. Any item that doesn't say 'text'
+// stays 'card' — the default is unchanged from before per-item types existed.
 function normalizeResults(items) {
   if (!Array.isArray(items)) return [];
   const seen = new Set();
   const out = [];
   for (const item of items) {
     if (!item || typeof item !== 'object') continue;
+    const type = item.type === 'text' ? 'text' : 'card';
     const name = str(item.name);
     const url = str(item.url);
-    if (!name || !url) continue;
-    if (seen.has(url)) continue;
-    seen.add(url);
+    if (!name) continue;
+    if (type === 'card' && !url) continue;
+    const dedupeKey = url || name;
+    if (seen.has(dedupeKey)) continue;
+    seen.add(dedupeKey);
     out.push({
       name,
       subtitle: str(item.subtitle),
@@ -58,14 +70,39 @@ function normalizeResults(items) {
       metrics: item.metrics && typeof item.metrics === 'object' ? item.metrics : {},
       image: str(item.image),
       url,
+      type,
     });
   }
-  // When some rows are bare-duration fragments and others aren't, drop just
-  // the fragments. If none are (or all are), leave the set untouched — never
-  // wipe out a page's entire result set.
-  const fragments = out.filter(isBareDurationFragment);
-  if (fragments.length && fragments.length < out.length) return out.filter((r) => !isBareDurationFragment(r));
+  // When some card rows are bare-duration fragments and others aren't, drop
+  // just the fragments. If none are (or all are, within the card subset),
+  // leave the set untouched — never wipe out a page's entire result set.
+  // Scoped to card rows only — text rows never carry a video duration, and
+  // shouldn't be counted toward "are all of them fragments".
+  const cardRows = out.filter((r) => r.type === 'card');
+  const fragments = cardRows.filter(isBareDurationFragment);
+  if (fragments.length && fragments.length < cardRows.length) return out.filter((r) => !fragments.includes(r));
   return out;
 }
 
-module.exports = { normalizeResults };
+// A synthesized write-up for informational content — a headline, a short
+// prose answer, and organized key facts, closer to a Wikipedia intro/infobox
+// or an assistant's answer than a stack of scraped rows. Optional: a
+// comparable listing (hotels, videos) has no single "answer" to write, so the
+// extractor leaves this null and only items apply. Returns null unless at
+// least one of headline/text/facts has real content, so a page with nothing
+// worth summarizing doesn't get an empty summary block rendered for it.
+function normalizeSummary(raw) {
+  if (!raw || typeof raw !== 'object') return null;
+  const headline = str(raw.headline);
+  const text = str(raw.text);
+  const factsRaw = raw.facts && typeof raw.facts === 'object' ? raw.facts : {};
+  const facts = {};
+  for (const [k, v] of Object.entries(factsRaw)) {
+    const val = str(v);
+    if (val) facts[k] = val;
+  }
+  if (!headline && !text && Object.keys(facts).length === 0) return null;
+  return { headline, text, facts };
+}
+
+module.exports = { normalizeResults, normalizeSummary };

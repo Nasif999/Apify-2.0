@@ -72,6 +72,38 @@ test('buildPageExtractPrompt works with no values or notes', () => {
   assert.ok(prompt.includes('some page text'));
 });
 
+test('buildPageExtractPrompt asks for a {items} object with a per-item "type", not a bare array', () => {
+  const prompt = buildPageExtractPrompt('some page text', {});
+  assert.ok(prompt.includes('"items"'));
+  assert.ok(prompt.includes('"type"'));
+  assert.ok(prompt.includes('"card"'));
+  assert.ok(prompt.includes('"text"'));
+});
+
+test('buildPageExtractPrompt asks for an optional {summary} write-up for informational content', () => {
+  const prompt = buildPageExtractPrompt('some page text', {});
+  assert.ok(prompt.includes('"summary"'));
+  assert.ok(prompt.includes('"headline"'));
+  assert.ok(prompt.includes('"facts"'));
+});
+
+test('buildPageExtractPrompt tells the model never to narrate the scrape/capture process in the summary', () => {
+  const prompt = buildPageExtractPrompt('some page text', {});
+  assert.ok(/never (mention|talk about|reference).*(scrap|captur|extract)/i.test(prompt));
+});
+
+test('buildPageExtractPrompt tells the model to type comparable-but-linkless items (flights, rates) as "text", never force "card" with a null url', () => {
+  const prompt = buildPageExtractPrompt('some page text', {});
+  assert.match(prompt, /flight/i);
+  assert.match(prompt, /never (use|type|mark|call) (it|this|them)? ?"card"/i);
+});
+
+test('buildPageExtractPrompt warns that "text" items are deduped by name, so linkless comparable rows need distinguishing detail in their name', () => {
+  const prompt = buildPageExtractPrompt('some page text', {});
+  assert.match(prompt, /dedup/i);
+  assert.match(prompt, /(unique|distinguish)/i);
+});
+
 test('shouldRescue: true when extraction found nothing', () => {
   assert.equal(shouldRescue([]), true);
   assert.equal(shouldRescue(null), true);

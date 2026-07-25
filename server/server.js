@@ -9,6 +9,8 @@ const { quoteRate } = require('./pricing');
 const { replay } = require('../runner/replay-runner');
 const { assessResults } = require('../runner/verify');
 const { callDeepSeekFix, loadEnv } = require('../runner/structure');
+const { applyFieldEdits, detectFilters, runFieldCommand } = require('../runner/fieldEdits');
+const { scanForMissedFields } = require('../runner/domscanRunner');
 
 const app = express();
 app.use(express.json({ limit: '5mb' }));
@@ -18,8 +20,13 @@ app.get('/', (req, res) => res.redirect('/index.html'));
 
 // A run must never hang the request forever — if the headless browser wedges
 // (page never settles, a wait condition never resolves), the client needs an
-// answer instead of an infinite spinner.
-const RUN_TIMEOUT_MS = 120000;
+// answer instead of an infinite spinner. 120s measured too tight for a normal
+// AI-assisted run: Playwright/navigation is ~20s, but real scraped card text
+// (full amenity lists, descriptions) makes the DeepSeek structuring call
+// itself take much longer than small test payloads suggested — a real run
+// completed at 113s, barely inside the old ceiling. 180s leaves headroom
+// without approaching a true hang.
+const RUN_TIMEOUT_MS = 180000;
 function withTimeout(promise, ms, label) {
   let timer;
   const timeout = new Promise((_, reject) => {
@@ -33,6 +40,13 @@ function withTimeout(promise, ms, label) {
 // runs to blow past the timeout in testing) — reject a second concurrent run
 // outright instead of letting both degrade.
 const runningAutomations = new Set();
+
+// In-memory run progress, keyed by automation id (one run at a time per
+// automation is already enforced above via runningAutomations, so the
+// automation id alone is a safe key — no separate progress token needed).
+// Deliberately not persisted: it's a live status readout for the run
+// currently in flight, not part of the run's permanent record.
+const runProgress = new Map();
 
 // --- Automations (dashboard-facing; single-user MVP, unauthenticated) ---
 
@@ -96,6 +110,7 @@ app.post('/api/automations/:id/run', async (req, res) => {
   // can still opt out with { ai: false } for a free heuristic-only run.
   const useAi = !(req.body && req.body.ai === false);
   const price = quoteRate(a.recording, { outputCount }).price;
+  runProgress.set(a.id, { stage: 'starting', pct: 0, at: Date.now() });
 
   try {
     const result = await withTimeout(
@@ -106,10 +121,12 @@ app.post('/api/automations/:id/run', async (req, res) => {
         envDir: path.join(__dirname, '..'),
         includeRaw: true,
         notes: a.extractionNotes || [],
+        onProgress: (stage, pct) => runProgress.set(a.id, { stage, pct, at: Date.now() }),
       }),
       RUN_TIMEOUT_MS,
       'Run'
     );
+    runProgress.set(a.id, { stage: 'done', pct: 100, at: Date.now() });
     // Sanity-check before this reaches the customer: a "successful" run that
     // actually scraped the same element repeatedly must not look identical to
     // a genuine success — flag it rather than deliver it silently.
@@ -124,6 +141,7 @@ app.post('/api/automations/:id/run', async (req, res) => {
       finalUrl: result.finalUrl,
       resultCount: (result.results || []).length,
       results: result.results || [],
+      summary: result.summary || null,
       dismissedPopups: result.dismissedPopups || 0,
       warning: check.suspicious ? check.reason : null,
       rawCards: result.rawCards || null,
@@ -135,14 +153,28 @@ app.post('/api/automations/:id/run', async (req, res) => {
       mode: result.mode,
       resultCount: run.resultCount,
       results: run.results,
+      summary: run.summary,
       warning: run.warning,
       outputUrl: `/run.html?id=${a.id}&runId=${run.id}`,
     });
   } catch (e) {
+    runProgress.set(a.id, { stage: 'failed', pct: 0, at: Date.now() });
     res.status(500).json({ error: 'Run failed', detail: e.message });
   } finally {
     runningAutomations.delete(a.id);
   }
+});
+
+// Real-time progress for the run currently in flight on this automation
+// (polled by automation.html while a run's POST /run request is pending —
+// that request itself blocks until the whole run finishes, so this is the
+// only way the client sees what stage it's actually reached). Owner-auth,
+// same as /run: this is operational detail about the automation, not public.
+app.get('/api/automations/:id/progress', (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+  res.json(runProgress.get(a.id) || { stage: 'idle', pct: 0 });
 });
 
 // Output URL for a past run.
@@ -207,6 +239,100 @@ app.post('/api/automations/:id/report-confirm', (req, res) => {
   res.json({ ok: true, notes });
 });
 
+// --- Field editor (curate the derived form: hide junk, mark filters, rename) ---
+
+// The fields the user currently sees (edits applied), for AI passes and responses.
+function editedFields(a) {
+  return applyFieldEdits(a.formspec, a.fieldEdits).fields;
+}
+// Hidden fields, by original name, so the UI can offer to restore them.
+function hiddenFieldList(a) {
+  const edits = a.fieldEdits || {};
+  return (a.formspec.fields || [])
+    .filter((f) => edits[f.key] && edits[f.key].hidden)
+    .map((f) => ({ key: f.key, name: (edits[f.key] && edits[f.key].name) || f.name }));
+}
+function siteAndLabels(recording) {
+  const site = (recording.sites && recording.sites[0]) || '';
+  const stepLabels = (recording.steps || []).map((s) => s.label).filter((l) => l && l.trim());
+  return { site, stepLabels };
+}
+function editedResponse(a) {
+  return { formspec: applyFieldEdits(a.formspec, a.fieldEdits), hiddenFields: hiddenFieldList(a) };
+}
+function deepseekKeyOr(res) {
+  loadEnv(path.join(__dirname, '..'));
+  const key = process.env.DEEPSEEK_API_KEY;
+  if (!key) res.status(400).json({ error: 'DEEPSEEK_API_KEY is not configured on this server.' });
+  return key;
+}
+
+// Set/clear one field override (✕ remove, restore, manual make-filter, rename).
+app.patch('/api/automations/:id/fields', (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+  const { key, edit } = req.body || {};
+  if (!key || typeof edit !== 'object' || edit === null) {
+    return res.status(400).json({ error: 'Body must include a field key and an edit object.' });
+  }
+  // { edit: {} } is the explicit "reset this field" signal.
+  const updated = Object.keys(edit).length ? store.setFieldEdit(a.id, key, edit) : store.clearFieldEdit(a.id, key);
+  res.json(editedResponse(updated));
+});
+
+// AI: which fields are on/off filters -> mark each as a checkbox field.
+app.post('/api/automations/:id/fields/detect-filters', async (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+  const key = deepseekKeyOr(res);
+  if (!key) return;
+  const { site, stepLabels } = siteAndLabels(a.recording);
+  try {
+    const filterKeys = await detectFilters(editedFields(a), site, stepLabels, key, { envDir: path.join(__dirname, '..') });
+    let updated = a;
+    for (const k of filterKeys) updated = store.setFieldEdit(a.id, k, { filter: true });
+    res.json({ ...editedResponse(updated), detected: filterKeys.length });
+  } catch (e) {
+    res.status(500).json({ error: 'Detect failed', detail: e.message });
+  }
+});
+
+// AI: one plain-English instruction -> a single field change (or a refusal).
+app.post('/api/automations/:id/fields/command', async (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+  const instruction = (req.body && req.body.instruction) || '';
+  if (!instruction.trim()) return res.status(400).json({ error: 'instruction is required' });
+  const key = deepseekKeyOr(res);
+  if (!key) return;
+  try {
+    const cmd = await runFieldCommand(editedFields(a), instruction, key, { envDir: path.join(__dirname, '..') });
+    if (cmd.action === 'none') return res.json({ applied: false, message: cmd.message });
+    const edit =
+      cmd.action === 'remove' ? { hidden: true } : cmd.action === 'make_filter' ? { filter: true } : { name: cmd.newName };
+    const updated = store.setFieldEdit(a.id, cmd.key, edit);
+    res.json({ applied: true, message: cmd.message, ...editedResponse(updated) });
+  } catch (e) {
+    res.status(500).json({ error: 'Command failed', detail: e.message });
+  }
+});
+
+// On-demand headless re-scan for interactive elements the recording missed.
+app.post('/api/automations/:id/fields/scan', async (req, res) => {
+  const a = store.getAutomation(req.params.id);
+  if (!a) return res.status(404).json({ error: 'Not found' });
+  if (!requireApiKey(req, res, a)) return;
+  try {
+    const { warnings } = await scanForMissedFields(a.recording);
+    res.json({ warnings: warnings || [] });
+  } catch (e) {
+    res.status(500).json({ error: 'Scan failed', detail: e.message });
+  }
+});
+
 function bearer(auth) {
   if (!auth) return null;
   const m = auth.match(/^Bearer\s+(.+)$/i);
@@ -221,7 +347,10 @@ function publicAutomation(a, opts = {}) {
     name: a.name,
     createdAt: a.createdAt,
     price: a.price,
-    formspec: a.formspec,
+    // Serve the edited view of the form (hidden/filter/renamed fields applied);
+    // the canonical a.formspec stays untouched so every edit is reversible.
+    formspec: applyFieldEdits(a.formspec, a.fieldEdits),
+    hiddenFields: hiddenFieldList(a),
     formspecEngine: a.formspecEngine,
     scanWarnings: a.scanWarnings,
     apiKey: opts.revealKey ? a.apiKey : undefined,

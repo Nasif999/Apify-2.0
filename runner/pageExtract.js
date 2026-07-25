@@ -12,8 +12,8 @@
 // Used as a RESCUE, not a replacement: replay-runner only falls back to it
 // when the proven card path underdelivers (see shouldRescue), so tuned sites
 // keep their fast, free path and incur no extra cost.
-const { chatJSON, extractJsonArray, notesPrefix } = require('./structure');
-const { normalizeResults } = require('./normalize');
+const { chatJSON, extractJsonItems, extractJsonSummary, notesPrefix } = require('./structure');
+const { normalizeResults, normalizeSummary } = require('./normalize');
 const { assessResults } = require('./verify');
 const { imgSrc } = require('./scrape');
 
@@ -84,12 +84,35 @@ function buildPageExtractPrompt(pageText, opts = {}) {
   return (
     notesPrefix(notes) +
     queryContext +
-    'Below is the readable content of a web page (a search-results or listing page), in markdown. ' +
-    'Extract the actual result/listing items — the repeated set of things the page presents ' +
-    '(products, hotels, videos, jobs, articles, places, etc.) — as a JSON array of objects with keys: ' +
-    'name, subtitle, price, rating, image, url, and metrics (an object of any other useful facts). ' +
-    'Use each item\'s markdown link target for url and image target for image. Ignore navigation, ads, ' +
-    'headers, footers, cookie banners, and unrelated links. Return ONLY a JSON array, no prose.\n\n' +
+    'Below is the readable content of a web page, in markdown. For EACH item you extract, decide, ' +
+    'silently, its own "type" — a page can mix both, so judge item by item rather than forcing one shape ' +
+    'on everything:\n' +
+    '- "card": one of a repeated set of comparable, individually-linkable items (a product, hotel, video, ' +
+    'job, article, place). Use its markdown link target for url and image target for image.\n' +
+    '- "text": there is no natural per-item link for this one — a data-table row (ticker, rate, ' +
+    'leaderboard entry), a dashboard stat, or a fact about a single topic. url may be omitted when nothing ' +
+    "real applies — never invent one or reuse the page's own URL for every item.\n" +
+    'Some comparable listings have NO real per-item link at all — e.g. flight search results, where each ' +
+    'row is picked via an in-page button/state change rather than its own URL. If an item has no genuine ' +
+    'url to give it, type it "text" even though it is one of several comparable options: never use "card" ' +
+    'with url left null or invented just because the item looks list-like. "text" items get deduped by ' +
+    'name, so when several linkless comparable rows would otherwise share the same label (e.g. two ' +
+    'flights on the same airline), give each a unique, distinguishing name (fold in the detail that tells ' +
+    'them apart, like departure time) rather than letting them collapse into one.\n\n' +
+    'Additionally: if this page is about a single topic rather than a set of comparable items to browse ' +
+    '(a stock/fact page, a biography, a status page — anything where the useful output is really ONE ' +
+    'answer, not a list to scroll through), also write a "summary" — a short, organized write-up like a ' +
+    'Wikipedia intro paragraph or an assistant\'s answer, not a dump of scraped fragments: {"headline": a ' +
+    'short title, "text": 1-3 plain-English sentences that actually answer what the user searched for, ' +
+    '"facts": an object of the key numbers/facts worth calling out}. Write "text" as a direct answer using ' +
+    'whatever real facts are present — never mention, talk about, or reference scraping, capturing, or ' +
+    'extracting the page, and never speculate about what data was or was not captured; just state the ' +
+    'facts you do have. Omit "summary" (or leave it null) for ' +
+    "a genuine comparable listing — that doesn't have one single answer to summarize.\n\n" +
+    'Ignore navigation, ads, headers, footers, and cookie banners. Return ONLY a JSON object (no prose) of ' +
+    'the shape {"items": [...], "summary": {...} | null}, where each item is an object with keys: type ' +
+    '("card" or "text"), name, subtitle, price, rating, image, url, and metrics (an object of any other ' +
+    'useful facts).\n\n' +
     pageText
   );
 }
@@ -116,14 +139,18 @@ async function extractFromPage(page, opts = {}) {
   const src = `(function(){ ${imgSrc.toString()} return (${serializePage.toString()})(document, { maxChars: ${maxChars} }); })()`;
   const pageText = await page.evaluate(src);
   const content = await chatJSON(
-    'You extract structured listing data from a web page and reply with JSON only.',
+    'You extract structured data from a web page and reply with JSON only.',
     buildPageExtractPrompt(pageText, opts),
     opts.apiKey,
     opts
   );
-  const arr = extractJsonArray(content);
-  if (!arr) throw new Error('page-extract returned no parseable JSON array');
-  return { results: normalizeResults(arr), engine: 'deepseek-pagewalk' };
+  const items = extractJsonItems(content);
+  if (!items) throw new Error('page-extract returned no parseable JSON');
+  return {
+    results: normalizeResults(items),
+    engine: 'deepseek-pagewalk',
+    summary: normalizeSummary(extractJsonSummary(content)),
+  };
 }
 
 module.exports = { serializePage, buildPageExtractPrompt, shouldRescue, extractFromPage };

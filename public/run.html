@@ -34,6 +34,15 @@
   .report .msg{font-size:12px;margin-top:8px;color:var(--muted)}
   .report .msg.ok{color:#33d17a}
   .report .msg.err{color:#ff5b6e}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--fg);padding:6px 12px;border-radius:8px;font-size:12.5px;font-weight:500;cursor:pointer}
+  .ghost:hover{border-color:var(--accent)}
+  pre{font-family:ui-monospace,monospace;font-size:12px;background:#0b0d12;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-all;max-height:340px}
+  .summary{background:#0b0d12;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .summary h3{margin:0 0 8px;font-size:17px;font-weight:700;letter-spacing:-.01em}
+  .summary p{margin:0 0 12px;font-size:14px;line-height:1.6;color:var(--fg)}
+  .summary .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px}
+  .summary .fact dt{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .summary .fact dd{margin:2px 0 0;font-size:14px;font-weight:600}
 </style>
 </head>
 <body>
@@ -46,7 +55,13 @@
     <div class="meta" id="meta">Loading…</div>
     <div id="warnbox" style="display:none;background:#3a2410;border:1px solid #6b4a1a;color:#ffb74d;border-radius:8px;padding:10px 12px;font-size:12px;margin:10px 0">⚠ <span id="warntext"></span></div>
     <div id="srclink" style="margin-bottom:12px"></div>
+    <div id="summaryBox" style="display:none"></div>
     <div id="results"></div>
+    <div style="margin-top:12px;display:flex;gap:8px">
+      <button class="ghost" id="jsonToggle">Show JSON</button>
+      <button class="ghost" id="jsonDownload">Download JSON</button>
+    </div>
+    <pre id="jsonBox" style="display:none;margin-top:10px"></pre>
     <div class="report">
       <button class="ghost" id="reportToggle">Something's wrong?</button>
       <div id="reportForm" style="display:none;margin-top:10px">
@@ -86,11 +101,29 @@ function badges(r){
   });
 }
 
+// Each result carries its own r.type ('card' = thumbnail grid tile, today's
+// rendering; 'text' = no thumbnail, no forced link, just name + facts) —
+// decided per item by the extractor, so a page mixing real linkable results
+// with a url-less fact renders both correctly in the same grid.
 function renderCards(box, results){
   if(!results || !results.length){ box.innerHTML = '<div class="muted">No results.</div>'; return; }
   box.className = 'grid';
   box.innerHTML = '';
   for(const r of results){
+    if(r.type === 'text'){
+      const row = document.createElement(r.url ? 'a' : 'div');
+      if(r.url){ row.href = r.url; row.target = '_blank'; row.rel = 'noopener'; }
+      row.className = 'rcard';
+      row.style.padding = '12px 14px';
+      row.innerHTML = `<div class="body"><div class="rname"></div><div class="rsub"></div><div class="badges"></div></div>`;
+      row.querySelector('.rname').textContent = r.name || '(unnamed)';
+      const sub = row.querySelector('.rsub');
+      if(r.subtitle){ sub.textContent = r.subtitle; } else { sub.remove(); }
+      const badgeBox = row.querySelector('.badges');
+      for(const b of badges(r)) badgeBox.appendChild(b);
+      box.appendChild(row);
+      continue;
+    }
     const card = document.createElement(r.url ? 'a' : 'div');
     if(r.url){ card.href = r.url; card.target = '_blank'; card.rel = 'noopener'; }
     card.className = 'rcard';
@@ -110,6 +143,35 @@ function renderCards(box, results){
   }
 }
 
+// A synthesized write-up (headline + prose + key facts) for informational
+// content — an actual answer, closer to a Wikipedia intro/infobox than a
+// stack of scraped rows. Null for a comparable listing (hotels, videos).
+function renderSummary(summary){
+  const box = $('summaryBox');
+  if(!summary){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = 'block';
+  const facts = Object.entries(summary.facts || {});
+  box.innerHTML =
+    `<div class="summary">
+      ${summary.headline ? `<h3></h3>` : ''}
+      ${summary.text ? `<p></p>` : ''}
+      ${facts.length ? '<dl class="facts"></dl>' : ''}
+    </div>`;
+  if(summary.headline) box.querySelector('h3').textContent = summary.headline;
+  if(summary.text) box.querySelector('p').textContent = summary.text;
+  if(facts.length){
+    const dl = box.querySelector('.facts');
+    for(const [k, v] of facts){
+      const wrap = document.createElement('div');
+      wrap.className = 'fact';
+      wrap.innerHTML = '<dt></dt><dd></dd>';
+      wrap.querySelector('dt').textContent = k;
+      wrap.querySelector('dd').textContent = v;
+      dl.appendChild(wrap);
+    }
+  }
+}
+
 function render(run){
   const short = run.outputCount && run.resultCount < run.outputCount
     ? ` — no more results could be found (asked for ${run.outputCount})`
@@ -122,8 +184,26 @@ function render(run){
   if(run.finalUrl){
     $('srclink').innerHTML = `<span class="muted">Source: </span><a href="${run.finalUrl}" target="_blank" rel="noopener" style="color:var(--accent);font-size:12px;word-break:break-all">${run.finalUrl}</a>`;
   }
+  renderSummary(run.summary);
   renderCards($('results'), run.results);
+  $('jsonBox').textContent = JSON.stringify(run.summary ? { summary: run.summary, results: run.results } : run.results, null, 2);
 }
+
+$('jsonToggle').addEventListener('click', () => {
+  const box = $('jsonBox');
+  const showing = box.style.display !== 'none';
+  box.style.display = showing ? 'none' : 'block';
+  $('jsonToggle').textContent = showing ? 'Show JSON' : 'Hide JSON';
+});
+
+$('jsonDownload').addEventListener('click', () => {
+  const blob = new Blob([$('jsonBox').textContent || '[]'], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${id || 'output'}-${runId || 'result'}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
 
 let apiKey = null;
 

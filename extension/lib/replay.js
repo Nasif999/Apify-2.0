@@ -12,6 +12,9 @@
     const u = new URL(finalUrl);
     for (const [key, value] of Object.entries(newParams || {})) {
       u.searchParams.delete(key);
+      // null/undefined means "drop this param" (an unticked filter checkbox) —
+      // delete it and don't re-add, so the site applies no such filter.
+      if (value == null) continue;
       if (Array.isArray(value)) {
         for (const item of value) u.searchParams.append(key, item);
       } else {
@@ -136,6 +139,22 @@
     return step;
   }
 
+  // A recording whose only step is a bare text-field fill (a typeahead search
+  // box) never captured the follow-up action that actually navigates -- a
+  // click on a dropdown suggestion, or Enter -- because the recorder only
+  // sees the field settle on a value, not a widget-specific selection event
+  // that came after it. Confirmed live on AmarStock: replaying just the fill
+  // leaves the page on its starting URL, so the only "result" scraped is
+  // whatever's in the page chrome (a support-contact widget), never the
+  // actual search hit. Enter is the one submit action nearly every text
+  // search box supports (same reasoning as resolveStepForReplay's
+  // trending-suggestion fallback above), so step-replay presses it as a
+  // best-effort recovery whenever nothing else in the recording could have
+  // performed the real submit.
+  function needsSearchSubmitFallback(steps) {
+    return Array.isArray(steps) && steps.length === 1 && steps[0].fieldType === 'text';
+  }
+
   const api = {
     buildReplayUrl,
     isUrlDriven,
@@ -145,6 +164,7 @@
     auxiliarySteps,
     stripResolvedIdParams,
     resolveStepForReplay,
+    needsSearchSubmitFallback,
   };
   if (global) global.ApifyReplay = api;
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { normalizeResults } = require('../runner/normalize');
+const { normalizeResults, normalizeSummary } = require('../runner/normalize');
 
 test('keeps valid rows and coerces fields to the schema', () => {
   const out = normalizeResults([
@@ -15,6 +15,7 @@ test('keeps valid rows and coerces fields to the schema', () => {
     metrics: {},
     image: 'http://x/i.jpg',
     url: 'http://x/h1',
+    type: 'card',
   });
 });
 
@@ -130,4 +131,81 @@ test('non-array input returns an empty array', () => {
 test('extracts a numeric rating embedded in a string', () => {
   const out = normalizeResults([{ name: 'H', url: 'http://x/1', rating: 'Scored 9.2' }]);
   assert.strictEqual(out[0].rating, 9.2);
+});
+
+test('per-item type "text": keeps a row with a name but no url (e.g. a data table with no per-row link)', () => {
+  const out = normalizeResults([
+    { type: 'text', name: 'DSEX Index', subtitle: '5,412.30', metrics: { change: '+1.2%' } },
+    { type: 'text', name: 'DS30 Index', subtitle: '2,011.10' },
+  ]);
+  assert.deepStrictEqual(out.map((r) => r.name), ['DSEX Index', 'DS30 Index']);
+  assert.strictEqual(out[0].url, null);
+  assert.strictEqual(out[0].type, 'text');
+});
+
+test('per-item type "text": still drops a row with no name at all', () => {
+  const out = normalizeResults([{ type: 'text', subtitle: 'no name here' }]);
+  assert.strictEqual(out.length, 0);
+});
+
+test('per-item type "text": dedupes by name when url is absent', () => {
+  const out = normalizeResults([
+    { type: 'text', name: 'DSEX Index', subtitle: '5,412.30' },
+    { type: 'text', name: 'DSEX Index', subtitle: 'stale dup' },
+  ]);
+  assert.strictEqual(out.length, 1);
+  assert.strictEqual(out[0].subtitle, '5,412.30');
+});
+
+test('an item with no explicit type and no url still drops (safe default, unchanged from before per-item types existed)', () => {
+  const out = normalizeResults([{ name: 'No URL Hotel' }]);
+  assert.strictEqual(out.length, 0);
+});
+
+test('mixed run: a "card" item without a url is dropped while a sibling "text" item without a url is kept', () => {
+  const out = normalizeResults([
+    { type: 'card', name: 'Some Hotel' }, // no url -> dropped, cards need a real link
+    { type: 'text', name: 'Circuit Breaker', subtitle: '10.00%' }, // no url -> kept, it's a fact not a link
+    { type: 'card', name: 'Other Hotel', url: 'http://x/h2' },
+  ]);
+  assert.deepStrictEqual(
+    out.map((r) => [r.name, r.type]),
+    [
+      ['Circuit Breaker', 'text'],
+      ['Other Hotel', 'card'],
+    ]
+  );
+});
+
+test('normalizeSummary: keeps a headline, prose text, and cleaned-up facts', () => {
+  const out = normalizeSummary({
+    headline: '  ACI — Circuit Breaker  ',
+    text: 'ACI is currently in a circuit breaker band between 175.60 and 214.60 (10%).',
+    facts: { 'Lower bound': '175.60', 'Upper bound': ' 214.60 ', empty: '', junk: null },
+  });
+  assert.deepStrictEqual(out, {
+    headline: 'ACI — Circuit Breaker',
+    text: 'ACI is currently in a circuit breaker band between 175.60 and 214.60 (10%).',
+    facts: { 'Lower bound': '175.60', 'Upper bound': '214.60' },
+  });
+});
+
+test('normalizeSummary: null/missing input returns null (no summary for comparable listings)', () => {
+  assert.strictEqual(normalizeSummary(null), null);
+  assert.strictEqual(normalizeSummary(undefined), null);
+  assert.strictEqual(normalizeSummary('not an object'), null);
+});
+
+test('normalizeSummary: an object with nothing usable (no headline, text, or facts) returns null', () => {
+  assert.strictEqual(normalizeSummary({}), null);
+  assert.strictEqual(normalizeSummary({ headline: '', text: '', facts: {} }), null);
+});
+
+test('normalizeSummary: a headline-only or text-only summary is still valid', () => {
+  assert.deepStrictEqual(normalizeSummary({ headline: 'ACI' }), { headline: 'ACI', text: null, facts: {} });
+  assert.deepStrictEqual(normalizeSummary({ text: 'Just a sentence.' }), {
+    headline: null,
+    text: 'Just a sentence.',
+    facts: {},
+  });
 });

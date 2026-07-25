@@ -3,9 +3,12 @@ const assert = require('node:assert');
 const {
   heuristicParse,
   extractJsonArray,
+  extractJsonItems,
+  extractJsonSummary,
   parseKind,
   buildKindPrompt,
   buildInformationalPrompt,
+  buildCombinedExtractPrompt,
   notesPrefix,
   buildFixPrompt,
 } = require('../runner/structure');
@@ -156,6 +159,83 @@ test('buildInformationalPrompt includes the user\'s search values and the cards 
 test('buildInformationalPrompt works with no search values given', () => {
   const prompt = buildInformationalPrompt([{ text: 'x' }], undefined);
   assert.ok(prompt.includes('x'));
+});
+
+test('buildCombinedExtractPrompt includes domain, search values, notes, and cards, and asks for per-item card/text typing', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'Hotel X' }], {
+    domain: 'booking.com',
+    values: { ss: 'Dhaka' },
+    notes: ['price is in the .rate span'],
+  });
+  assert.ok(prompt.includes('booking.com'));
+  assert.ok(prompt.includes('Dhaka'));
+  assert.ok(prompt.includes('price is in the .rate span'));
+  assert.ok(prompt.includes('Hotel X'));
+  assert.ok(prompt.includes('"card"'));
+  assert.ok(prompt.includes('"text"'));
+});
+
+test('buildCombinedExtractPrompt works with no domain, values, or notes given', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'x' }], {});
+  assert.ok(prompt.includes('a website'));
+  assert.ok(prompt.includes('x'));
+});
+
+test('buildCombinedExtractPrompt asks the model to tag each item\'s own type and return {items}', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'DSEX Index 5,412.30' }], {});
+  assert.ok(prompt.includes('"items"'));
+  assert.ok(prompt.includes('"type"'));
+});
+
+test('buildCombinedExtractPrompt asks for an optional {summary} write-up for informational content', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'DSEX Index 5,412.30' }], {});
+  assert.ok(prompt.includes('"summary"'));
+  assert.ok(prompt.includes('"headline"'));
+  assert.ok(prompt.includes('"facts"'));
+  assert.ok(/wikipedia/i.test(prompt));
+});
+
+test('buildCombinedExtractPrompt tells the model never to narrate the scrape/capture process in the summary', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'DSEX Index 5,412.30' }], {});
+  assert.ok(/never (mention|talk about|reference).*(scrap|captur|extract)/i.test(prompt));
+});
+
+test('buildCombinedExtractPrompt tells the model to type comparable-but-linkless items (flights, rates) as "text", never force "card" with a null url', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'US Bangla DAC-CXB BDT 62,684' }], {});
+  assert.match(prompt, /flight/i);
+  assert.match(prompt, /never (use|type|mark|call) (it|this|them)? ?"card"/i);
+});
+
+test('buildCombinedExtractPrompt warns that "text" items are deduped by name, so linkless comparable rows need distinguishing detail in their name', () => {
+  const prompt = buildCombinedExtractPrompt([{ text: 'US Bangla DAC-CXB BDT 62,684' }], {});
+  assert.match(prompt, /dedup/i);
+  assert.match(prompt, /(unique|distinguish)/i);
+});
+
+test('extractJsonItems: parses a {items} object', () => {
+  const out = extractJsonItems('```json\n{"items":[{"name":"DSEX Index","type":"text"}]}\n```');
+  assert.deepStrictEqual(out, [{ name: 'DSEX Index', type: 'text' }]);
+});
+
+test('extractJsonItems: falls back to a bare JSON array (legacy shape)', () => {
+  const out = extractJsonItems('[{"name":"Hotel A","url":"/a"}]');
+  assert.deepStrictEqual(out, [{ name: 'Hotel A', url: '/a' }]);
+});
+
+test('extractJsonItems: returns null when nothing parseable is found', () => {
+  assert.strictEqual(extractJsonItems('no json here'), null);
+});
+
+test('extractJsonSummary: pulls the summary object out alongside items', () => {
+  const out = extractJsonSummary(
+    '{"items":[{"name":"ACI"}],"summary":{"headline":"ACI","text":"ACI is in a circuit breaker.","facts":{"lower":"175.60"}}}'
+  );
+  assert.deepStrictEqual(out, { headline: 'ACI', text: 'ACI is in a circuit breaker.', facts: { lower: '175.60' } });
+});
+
+test('extractJsonSummary: null when the model omits it or replies with a bare array (legacy shape)', () => {
+  assert.strictEqual(extractJsonSummary('{"items":[{"name":"Hotel A"}]}'), null);
+  assert.strictEqual(extractJsonSummary('[{"name":"Hotel A"}]'), null);
 });
 
 test('notesPrefix: empty string when there are no notes', () => {

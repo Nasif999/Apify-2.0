@@ -22,7 +22,7 @@
   .price{color:var(--accent);font-weight:700;font-size:15px}
   .bar{height:6px;border-radius:6px;background:#0b0d12;overflow:hidden;margin:14px 0;display:none}
   .bar.on{display:block}
-  .bar i{display:block;height:100%;width:40%;background:var(--accent);animation:slide 1.1s infinite ease-in-out}
+  .bar i{display:block;height:100%;width:0%;background:var(--accent);transition:width .35s ease}
   @keyframes slide{0%{margin-left:-40%}100%{margin-left:100%}}
   .result{display:flex;gap:12px;padding:10px 8px;border-radius:10px;text-decoration:none;color:inherit;transition:background .12s}
   .result:hover{background:#0b0d12}
@@ -39,7 +39,36 @@
   code,pre{font-family:ui-monospace,monospace;font-size:12px}
   pre{background:#0b0d12;border:1px solid var(--line);border-radius:8px;padding:12px;overflow:auto;white-space:pre-wrap;word-break:break-all}
   .krow{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .summary{background:#0b0d12;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:14px}
+  .summary h3{margin:0 0 8px;font-size:16px;font-weight:700;letter-spacing:-.01em}
+  .summary p{margin:0 0 12px;font-size:13.5px;line-height:1.6;color:var(--fg)}
+  .summary .facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px 16px}
+  .summary .fact dt{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}
+  .summary .fact dd{margin:2px 0 0;font-size:14px;font-weight:600}
   .outlink{margin-top:12px;font-size:13px}
+  .ghost{background:transparent;border:1px solid var(--line);color:var(--fg);padding:6px 12px;font-size:12.5px;font-weight:500;width:auto}
+  .ghost:hover{border-color:var(--accent)}
+  .fieldtools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .cmdrow{display:flex;gap:8px;margin-bottom:8px}
+  .cmdrow input{font-family:system-ui,sans-serif;font-size:13px}
+  .fieldwrap{position:relative}
+  .rmField{position:absolute;top:9px;right:0;background:transparent;border:0;color:var(--muted);font-size:14px;line-height:1;padding:2px 4px;width:auto;cursor:pointer}
+  .rmField:hover{color:var(--danger)}
+  .pauseField{position:absolute;top:9px;right:22px;background:transparent;border:0;font-size:13px;line-height:1;padding:2px 4px;width:auto;cursor:pointer;opacity:.6}
+  .pauseField:hover{opacity:1}
+  .renameField{position:absolute;top:9px;right:44px;background:transparent;border:0;color:var(--muted);font-size:13px;line-height:1;padding:2px 4px;width:auto;cursor:pointer;opacity:.6}
+  .renameField:hover{opacity:1;color:var(--accent)}
+  .fieldwrap.paused{opacity:.45}
+  .fieldwrap.paused .pauseField{opacity:1}
+  .fieldwrap.paused input{border-color:#6b4a1a}
+  .comppart{position:relative}
+  .comppart .pausePart{right:0}
+  .comppart.paused{opacity:.45}
+  .comppart.paused .pauseField{opacity:1}
+  .comppart.paused input{border-color:#6b4a1a}
+  #fieldMsg{margin:2px 0 10px;min-height:0}
+  #fieldMsg.ok{color:var(--ok)} #fieldMsg.no{color:#ffb74d}
+  #hiddenBox a{color:var(--accent);cursor:pointer;text-decoration:none}
 </style>
 </head>
 <body>
@@ -50,7 +79,17 @@
 <main>
   <section class="card">
     <h2>Inputs</h2>
-    <div id="scanWarnBox" style="display:none;background:#3a2410;border:1px solid #6b4a1a;color:#ffb74d;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px">⚠ AI scan found <span id="scanWarnText"></span> possibly-missed field(s). Consider re-recording to include them.</div>
+    <div id="scanWarnBox" style="display:none;background:#3a2410;border:1px solid #6b4a1a;color:#ffb74d;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px">⚠ <span id="scanWarnText"></span></div>
+    <div class="fieldtools">
+      <button class="ghost" id="detectFilters">✨ Detect filters</button>
+      <button class="ghost" id="scanMissing">🔍 Check for missing fields</button>
+    </div>
+    <div class="cmdrow">
+      <input id="fieldCmd" placeholder="Describe a change, e.g. make 5 stars a checkbox" />
+      <button class="ghost" id="applyCmd">Apply</button>
+    </div>
+    <div id="fieldMsg" class="muted"></div>
+    <div id="hiddenBox" class="muted" style="display:none"></div>
     <div id="form"></div>
     <label>Number of results</label>
     <select id="outputCount">
@@ -65,8 +104,16 @@
   <section class="card">
     <h2>Output</h2>
     <div id="warnbox" style="display:none;background:#3a2410;border:1px solid #6b4a1a;color:#ffb74d;border-radius:8px;padding:10px 12px;font-size:12px;margin-bottom:12px">⚠ <span id="warntext"></span></div>
+    <div id="summaryBox" style="display:none"></div>
     <div id="output"><div class="muted">Run the automation to see results.</div></div>
     <div class="outlink" id="outlink"></div>
+    <div id="jsonTools" style="display:none;margin-top:10px">
+      <div class="fieldtools" style="margin-bottom:0">
+        <button class="ghost" id="jsonToggle" style="width:auto">Show JSON</button>
+        <button class="ghost" id="jsonDownload" style="width:auto">Download JSON</button>
+      </div>
+      <pre id="jsonBox" style="display:none;margin-top:10px;max-height:340px"></pre>
+    </div>
   </section>
 
   <section class="card" style="grid-column:1/-1">
@@ -82,8 +129,29 @@ const $ = (id) => document.getElementById(id);
 const id = new URLSearchParams(location.search).get('id');
 let auto = null;
 
+// Fields paused for the next run only — never sent to the server, so a reload
+// (or just leaving the page) brings every field back automatically. This is
+// deliberately NOT the same as the ✕ remove: remove is a persistent
+// decision about the form itself; pause is "not right now, definitely later."
+const pausedFields = new Set();
+
 function fieldRow(f){
   const wrap = document.createElement('div');
+  if(f.filter){
+    // On/off filter: ticked sends the recorded value, unticked drops the param.
+    const label = document.createElement('label');
+    label.style.cssText = 'display:flex;align-items:center;gap:6px';
+    const box = document.createElement('input');
+    box.type = 'checkbox'; box.style.width = 'auto';
+    box.setAttribute('data-key', f.key);
+    box.setAttribute('data-filter', 'true');
+    box.dataset.onvalue = f.onValue == null ? '' : f.onValue;
+    box.checked = true;
+    label.appendChild(box);
+    label.append(` ${f.name}`);
+    wrap.appendChild(label);
+    return wrap;
+  }
   if(f.type === 'tickmark'){
     wrap.innerHTML = `<label style="display:flex;align-items:center;gap:6px"><input type="checkbox" data-key="${f.key}" data-tickmark="true" style="width:auto" /></label>`;
     wrap.querySelector('label').append(` ${f.name}`);
@@ -93,15 +161,30 @@ function fieldRow(f){
   if(f.type === 'compound' && Array.isArray(f.parts)){
     // One labeled box per position; rejoined by data-compound-key/index in
     // collectValues using the exact recorded delimiter (pure position-swap).
+    // A single position can't be dropped without breaking that rejoin (the
+    // site expects all N slots filled), so each part gets its own pause that
+    // means "use the recorded value for this position, ignore what's typed" --
+    // not "omit it" -- so a typed override is never lost, just parked.
     const group = document.createElement('div');
     const heading = document.createElement('div');
     heading.className = 'muted'; heading.style.margin = '2px 0 4px'; heading.textContent = f.name;
     group.appendChild(heading);
     f.parts.forEach((p, i) => {
+      const partKey = `${f.key}:${i}`;
+      const defaultVal = p.value == null ? '' : p.value;
       const row = document.createElement('div');
-      row.innerHTML = `<label></label><input data-compound-key="${f.key}" data-compound-index="${i}" data-delim="${f.delimiter}" />`;
+      row.className = 'comppart' + (pausedFields.has(partKey) ? ' paused' : '');
+      row.innerHTML = `<label></label><input data-compound-key="${f.key}" data-compound-index="${i}" data-delim="${f.delimiter}" data-part-default="${defaultVal}" />`;
       row.querySelector('label').textContent = p.label;
-      row.querySelector('input').value = p.value == null ? '' : p.value;
+      row.querySelector('input').value = defaultVal;
+      const pause = document.createElement('button');
+      pause.className = 'pauseField pausePart';
+      pause.textContent = pausedFields.has(partKey) ? '▶' : '⏸';
+      pause.title = pausedFields.has(partKey)
+        ? 'Paused for the next run — click to use your typed value again'
+        : 'Use the recorded value for this position on the next run only';
+      pause.addEventListener('click', () => togglePause(partKey, row, pause, PAUSE_PART_TITLES));
+      row.appendChild(pause);
       group.appendChild(row);
     });
     return group;
@@ -114,6 +197,29 @@ function fieldRow(f){
   return wrap;
 }
 
+const PAUSE_TITLES = {
+  off: 'Skip this field for the next run only (it comes back automatically)',
+  on: 'Paused for the next run — click to use it again',
+};
+const PAUSE_PART_TITLES = {
+  off: 'Use the recorded value for this position on the next run only',
+  on: 'Paused for the next run — click to use your typed value again',
+};
+
+function togglePause(key, row, btn, titles = PAUSE_TITLES){
+  if(pausedFields.has(key)){
+    pausedFields.delete(key);
+    row.classList.remove('paused');
+    btn.textContent = '⏸';
+    btn.title = titles.off;
+  } else {
+    pausedFields.add(key);
+    row.classList.add('paused');
+    btn.textContent = '▶';
+    btn.title = titles.on;
+  }
+}
+
 function collectValues(){
   const values = {};
   const compound = {}; // key -> { delim, parts: {index: value} }
@@ -121,10 +227,15 @@ function collectValues(){
     const compoundKey = inp.getAttribute('data-compound-key');
     if(compoundKey != null){
       const idx = Number(inp.getAttribute('data-compound-index'));
-      (compound[compoundKey] = compound[compoundKey] || { delim: inp.getAttribute('data-delim'), parts: {} }).parts[idx] = inp.value;
+      // A paused position can't just drop out (the site expects all N slots),
+      // so it sends its recorded default instead of whatever's currently typed.
+      const partKey = `${compoundKey}:${idx}`;
+      const val = pausedFields.has(partKey) ? inp.getAttribute('data-part-default') : inp.value;
+      (compound[compoundKey] = compound[compoundKey] || { delim: inp.getAttribute('data-delim'), parts: {} }).parts[idx] = val;
       return;
     }
     const key = inp.getAttribute('data-key');
+    if(inp.getAttribute('data-filter') === 'true'){ values[key] = inp.checked ? inp.dataset.onvalue : null; return; }
     if(inp.getAttribute('data-tickmark') === 'true'){ values[key] = inp.checked; return; }
     const isArr = inp.getAttribute('data-arr') === 'true';
     const raw = inp.value;
@@ -134,6 +245,15 @@ function collectValues(){
   for(const [key, {delim, parts}] of Object.entries(compound)){
     const ordered = Object.keys(parts).map(Number).sort((a,b)=>a-b).map(i => parts[i]);
     values[key] = ordered.join(delim);
+  }
+  // Paused whole fields (plain, array, compound-as-a-unit, or filter checkbox)
+  // override to null -- the runner's universal "leave this one alone" signal
+  // (dropped from the url, step skipped outright). Compound PART pauses
+  // (key "fieldKey:index") already took effect above via data-part-default
+  // and are not real top-level keys, so they're excluded here.
+  for(const key of pausedFields){
+    if(key.includes(':')) continue;
+    values[key] = null;
   }
   return values;
 }
@@ -157,11 +277,58 @@ function badges(r){
   });
 }
 
+// A synthesized write-up (headline + prose + key facts) for informational
+// content — an actual answer, closer to a Wikipedia intro/infobox than a
+// stack of scraped rows. Null for a comparable listing (hotels, videos),
+// where there's no single "answer" to write.
+function renderSummary(summary){
+  const box = $('summaryBox');
+  if(!summary){ box.style.display = 'none'; box.innerHTML = ''; return; }
+  box.style.display = 'block';
+  const facts = Object.entries(summary.facts || {});
+  box.innerHTML =
+    `<div class="summary">
+      ${summary.headline ? `<h3></h3>` : ''}
+      ${summary.text ? `<p></p>` : ''}
+      ${facts.length ? '<dl class="facts"></dl>' : ''}
+    </div>`;
+  if(summary.headline) box.querySelector('h3').textContent = summary.headline;
+  if(summary.text) box.querySelector('p').textContent = summary.text;
+  if(facts.length){
+    const dl = box.querySelector('.facts');
+    for(const [k, v] of facts){
+      const wrap = document.createElement('div');
+      wrap.className = 'fact';
+      wrap.innerHTML = '<dt></dt><dd></dd>';
+      wrap.querySelector('dt').textContent = k;
+      wrap.querySelector('dd').textContent = v;
+      dl.appendChild(wrap);
+    }
+  }
+}
+
+// Each result carries its own r.type ('card' = thumbnail + name + link,
+// today's rendering; 'text' = no thumbnail, no forced link, just the name +
+// facts) — decided per item by the extractor, so a page that mixes real
+// linkable results with a url-less fact renders both correctly at once.
 function renderResults(results){
   const out = $('output');
   if(!results || !results.length){ out.innerHTML = '<div class="muted">No results returned.</div>'; return; }
   out.innerHTML = '';
   for(const r of results){
+    if(r.type === 'text'){
+      const row = document.createElement(r.url ? 'a' : 'div');
+      if(r.url){ row.href = r.url; row.target = '_blank'; row.rel = 'noopener'; }
+      row.className = 'result';
+      row.innerHTML = `<div class="rbody"><div class="rname"></div><div class="rsub"></div><div class="badges"></div></div>`;
+      row.querySelector('.rname').textContent = r.name || '(unnamed)';
+      const sub = row.querySelector('.rsub');
+      if(r.subtitle){ sub.textContent = r.subtitle; } else { sub.remove(); }
+      const badgeBox = row.querySelector('.badges');
+      for(const b of badges(r)) badgeBox.appendChild(b);
+      out.appendChild(row);
+      continue;
+    }
     const row = document.createElement(r.url ? 'a' : 'div');
     if(r.url){ row.href = r.url; row.target = '_blank'; row.rel = 'noopener'; }
     row.className = 'result';
@@ -180,6 +347,32 @@ function renderResults(results){
     out.appendChild(row);
   }
 }
+
+let lastRunPayload = null;
+
+function showJsonTools(data){
+  lastRunPayload = data;
+  $('jsonTools').style.display = data ? 'block' : 'none';
+  $('jsonBox').style.display = 'none';
+  $('jsonToggle').textContent = 'Show JSON';
+}
+
+$('jsonToggle').addEventListener('click', () => {
+  const box = $('jsonBox');
+  const showing = box.style.display !== 'none';
+  if(showing){ box.style.display = 'none'; $('jsonToggle').textContent = 'Show JSON'; }
+  else{ box.textContent = JSON.stringify(lastRunPayload, null, 2); box.style.display = 'block'; $('jsonToggle').textContent = 'Hide JSON'; }
+});
+
+$('jsonDownload').addEventListener('click', () => {
+  if(!lastRunPayload) return;
+  const blob = new Blob([JSON.stringify(lastRunPayload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `${id}-results.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+});
 
 async function refreshPrice(){
   const n = Number($('outputCount').value);
@@ -200,11 +393,9 @@ async function load(){
   if(!res.ok){ $('title').textContent='Not found'; return; }
   $('title').textContent = auto.name;
   $('price').textContent = `৳${auto.price} / run`;
-  const form = $('form'); form.innerHTML='';
-  (auto.formspec.fields||[]).forEach(f => form.appendChild(fieldRow(f)));
+  renderForm(auto.formspec, auto.hiddenFields);
   if(auto.scanWarnings && auto.scanWarnings.length){
-    $('scanWarnText').textContent = auto.scanWarnings.map(w => `${w.label} (${w.fieldType})`).join(', ');
-    $('scanWarnBox').style.display = 'block';
+    showScanWarnings(auto.scanWarnings);
   } else {
     $('scanWarnBox').style.display = 'none';
   }
@@ -212,23 +403,172 @@ async function load(){
   await refreshPrice();
 }
 
+// Render (and re-render) the input form + the "restore hidden fields" strip.
+// Each field gets a ✕ that hides it via the field-edit API.
+function renderForm(formspec, hiddenFields){
+  const form = $('form'); form.innerHTML='';
+  (formspec.fields||[]).forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'fieldwrap' + (pausedFields.has(f.key) ? ' paused' : '');
+    row.appendChild(fieldRow(f));
+    const pause = document.createElement('button');
+    pause.className = 'pauseField';
+    pause.textContent = pausedFields.has(f.key) ? '▶' : '⏸';
+    pause.title = pausedFields.has(f.key)
+      ? 'Paused for the next run — click to use it again'
+      : 'Skip this field for the next run only (it comes back automatically)';
+    pause.addEventListener('click', () => togglePause(f.key, row, pause));
+    row.appendChild(pause);
+    const rename = document.createElement('button');
+    rename.className = 'renameField'; rename.textContent = '✎'; rename.title = 'Rename this field';
+    rename.addEventListener('click', () => {
+      const next = prompt('New name for this field:', f.name);
+      if(next == null) return; // cancelled
+      const trimmed = next.trim();
+      if(!trimmed || trimmed === f.name) return;
+      patchField(f.key, { name: trimmed });
+    });
+    row.appendChild(rename);
+    const x = document.createElement('button');
+    x.className = 'rmField'; x.textContent = '✕'; x.title = 'Remove this field';
+    x.addEventListener('click', () => patchField(f.key, { hidden: true }));
+    row.appendChild(x);
+    form.appendChild(row);
+  });
+  const box = $('hiddenBox');
+  const hidden = hiddenFields || [];
+  if(hidden.length){
+    box.innerHTML = 'Hidden: ';
+    hidden.forEach((h, i) => {
+      const a = document.createElement('a');
+      a.textContent = h.name; a.title = 'Restore';
+      a.addEventListener('click', () => patchField(h.key, {}));
+      if(i) box.append(', ');
+      box.appendChild(a);
+    });
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function showScanWarnings(warnings){
+  if(!warnings || !warnings.length){
+    $('scanWarnText').textContent = 'No missed fields found — the form looks complete.';
+    $('scanWarnBox').style.display = 'block';
+    return;
+  }
+  $('scanWarnText').textContent = `Found ${warnings.length} possibly-missed field(s): ` +
+    warnings.map(w => `${w.label} (${w.fieldType})`).join(', ') + '. Consider re-recording to include them.';
+  $('scanWarnBox').style.display = 'block';
+}
+
+function setFieldMsg(text, cls){
+  const el = $('fieldMsg');
+  el.textContent = text || '';
+  el.className = 'muted' + (cls ? ' ' + cls : '');
+}
+
+// Owner-authenticated call to a field-editor endpoint.
+async function fieldApi(pathSuffix, method, body){
+  return fetch(`/api/automations/${id}/fields${pathSuffix}`, {
+    method,
+    headers: { 'Content-Type':'application/json', 'X-Api-Key': auto.apiKey },
+    body: body ? JSON.stringify(body) : undefined,
+  });
+}
+
+async function patchField(key, edit){
+  const res = await fieldApi('', 'PATCH', { key, edit });
+  if(!res.ok) return setFieldMsg('Could not update field.', 'no');
+  const data = await res.json();
+  renderForm(data.formspec, data.hiddenFields);
+  setFieldMsg('');
+}
+
+$('detectFilters').addEventListener('click', async () => {
+  setFieldMsg('Detecting filters…');
+  try{
+    const res = await fieldApi('/detect-filters', 'POST', {});
+    const data = await res.json();
+    if(!res.ok) return setFieldMsg(data.error || 'Detection failed.', 'no');
+    renderForm(data.formspec, data.hiddenFields);
+    setFieldMsg(data.detected ? `Marked ${data.detected} filter(s) as checkboxes.` : 'No on/off filters found.', data.detected ? 'ok' : null);
+  }catch(e){ setFieldMsg('Detection failed: '+e.message, 'no'); }
+});
+
+$('scanMissing').addEventListener('click', async () => {
+  setFieldMsg('Scanning the page for missed fields… (headless, ~15s)');
+  try{
+    const res = await fieldApi('/scan', 'POST', {});
+    const data = await res.json();
+    if(!res.ok) return setFieldMsg(data.error || 'Scan failed.', 'no');
+    showScanWarnings(data.warnings);
+    setFieldMsg('');
+  }catch(e){ setFieldMsg('Scan failed: '+e.message, 'no'); }
+});
+
+async function applyCommand(){
+  const instruction = $('fieldCmd').value.trim();
+  if(!instruction) return;
+  setFieldMsg('Working on it…');
+  try{
+    const res = await fieldApi('/command', 'POST', { instruction });
+    const data = await res.json();
+    if(!res.ok) return setFieldMsg(data.error || 'Command failed.', 'no');
+    if(data.applied){
+      renderForm(data.formspec, data.hiddenFields);
+      $('fieldCmd').value = '';
+      setFieldMsg(data.message, 'ok');
+    } else {
+      setFieldMsg(data.message, 'no');
+    }
+  }catch(e){ setFieldMsg('Command failed: '+e.message, 'no'); }
+}
+$('applyCmd').addEventListener('click', applyCommand);
+$('fieldCmd').addEventListener('keydown', (e) => { if(e.key === 'Enter') applyCommand(); });
+
 $('outputCount').addEventListener('change', refreshPrice);
 
 $('copyKey').addEventListener('click', () => navigator.clipboard.writeText(auto.apiKey));
 
-const TYPICAL_RUN_SECONDS = 30;
+// Stage labels for the real progress readout below -- these name what the
+// run has actually reached (reported by replay-runner.js via onProgress),
+// not a guess based on elapsed time. Unrecognized/future stage names still
+// show as-is so this never goes silent if a stage gets renamed.
+const STAGE_LABELS = {
+  starting: 'Starting…',
+  navigating: 'Opening the site…',
+  'applying filters': 'Applying filters…',
+  'loading results': 'Loading results…',
+  scraping: 'Reading results…',
+  'extracting with AI': 'Extracting with AI…',
+  extracting: 'Extracting results…',
+  finalizing: 'Finalizing…',
+  done: 'Done',
+};
 
 $('run').addEventListener('click', async () => {
-  $('run').disabled = true; $('bar').classList.add('on'); $('outlink').textContent='';
-  const startedAt = Date.now();
-  const tick = () => {
-    const s = Math.round((Date.now() - startedAt) / 1000);
-    $('runmsg').textContent = s <= TYPICAL_RUN_SECONDS
-      ? `Running headless browser… ${s}s (usually ~${TYPICAL_RUN_SECONDS}s)`
-      : `Running headless browser… ${s}s (taking longer than usual, still working)`;
+  $('run').disabled = true; $('bar').classList.add('on'); $('outlink').textContent=''; $('bar').querySelector('i').style.width = '0%';
+  showJsonTools(null);
+  renderSummary(null);
+  let polling = true;
+  const poll = async () => {
+    while(polling){
+      try{
+        const r = await fetch('/api/automations/'+id+'/progress', { headers:{'X-Api-Key':auto.apiKey} });
+        if(r.ok){
+          const p = await r.json();
+          $('bar').querySelector('i').style.width = Math.max(4, p.pct || 0) + '%';
+          if(p.stage && p.stage !== 'idle' && p.stage !== 'failed'){
+            $('runmsg').textContent = STAGE_LABELS[p.stage] || p.stage;
+          }
+        }
+      }catch{}
+      await new Promise((r) => setTimeout(r, 700));
+    }
   };
-  tick();
-  const timer = setInterval(tick, 1000);
+  poll();
   try{
     const requested = Number($('outputCount').value);
     const res = await fetch('/api/automations/'+id+'/run', {
@@ -239,6 +579,7 @@ $('run').addEventListener('click', async () => {
     const data = await res.json();
     if(!res.ok){ $('runmsg').textContent = data.error+(data.detail?(': '+data.detail):''); }
     else{
+      $('bar').querySelector('i').style.width = '100%';
       const short = data.resultCount < requested
         ? ` — no more results could be found (asked for ${requested})`
         : '';
@@ -249,11 +590,13 @@ $('run').addEventListener('click', async () => {
       } else {
         $('warnbox').style.display = 'none';
       }
+      renderSummary(data.summary);
       renderResults(data.results);
+      showJsonTools(data.summary ? { summary: data.summary, results: data.results } : data.results);
       $('outlink').innerHTML = `Output URL: <a href="${data.outputUrl}" target="_blank">${data.outputUrl}</a>`;
     }
   }catch(e){ $('runmsg').textContent = 'Error: '+e.message; }
-  finally{ clearInterval(timer); $('run').disabled=false; $('bar').classList.remove('on'); }
+  finally{ polling = false; $('run').disabled=false; $('bar').classList.remove('on'); }
 });
 
 load();

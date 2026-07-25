@@ -6,6 +6,7 @@ const {
   auxiliarySteps,
   stripResolvedIdParams,
   resolveStepForReplay,
+  needsSearchSubmitFallback,
 } = require('../extension/lib/replay');
 const bookingFilters = require('../runner/fixtures/booking-filters.json');
 
@@ -39,6 +40,23 @@ test('buildReplayUrl leaves the url unchanged when no new params', () => {
   const p = new URL(out).searchParams;
   assert.strictEqual(p.get('x'), '1');
   assert.strictEqual(p.get('y'), '2');
+});
+
+test('buildReplayUrl drops a param whose value is null (unticked filter)', () => {
+  // A filter checkbox unticked in the form sends null for that key; the param
+  // must vanish from the replay URL entirely (not become key=null), so the
+  // site applies no such filter. Ticked = its real value is sent normally.
+  const out = buildReplayUrl(BOOKING_FINAL, { group_adults: null });
+  const p = new URL(out).searchParams;
+  assert.strictEqual(p.has('group_adults'), false);
+  assert.strictEqual(p.get('ss'), "Cox's Bazar, Bangladesh"); // others untouched
+});
+
+test('buildReplayUrl drops a param whose value is undefined', () => {
+  const out = buildReplayUrl('https://a.com/s?x=1&y=2', { y: undefined });
+  const p = new URL(out).searchParams;
+  assert.strictEqual(p.has('y'), false);
+  assert.strictEqual(p.get('x'), '1');
 });
 
 test('isUrlDriven: true when a search adds state params to the URL', () => {
@@ -186,4 +204,29 @@ test('stripResolvedIdParams: leaves params that merely contain "id"/"type" witho
 test('stripResolvedIdParams: is a no-op when there are no _id/_type params', () => {
   const url = 'https://a.com/s?ss=Dhaka&checkin=2026-07-20';
   assert.strictEqual(stripResolvedIdParams(url), url);
+});
+
+test('needsSearchSubmitFallback: true for a recording that is a single bare text-fill step', () => {
+  // regression: AmarStock's recording. The typeahead dropdown selection that
+  // actually navigates was never captured -- just the fill into #search-input
+  // -- so replay stalls on the starting page and scrapes only page chrome.
+  const steps = [{ id: 1, fieldType: 'text', selector: '#search-input', value: 'ACI' }];
+  assert.strictEqual(needsSearchSubmitFallback(steps), true);
+});
+
+test('needsSearchSubmitFallback: false when a follow-up step was recorded (normal case)', () => {
+  const steps = [
+    { id: 1, fieldType: 'text', selector: '#dest', value: 'Cox' },
+    { id: 2, fieldType: 'unknown', selector: '.suggestion', forTextId: 1, value: "Cox's Bazar, Bangladesh" },
+  ];
+  assert.strictEqual(needsSearchSubmitFallback(steps), false);
+});
+
+test('needsSearchSubmitFallback: false for a lone step that is not a text field', () => {
+  const steps = [{ id: 1, fieldType: 'tickmark', selector: '#agree', value: true }];
+  assert.strictEqual(needsSearchSubmitFallback(steps), false);
+});
+
+test('needsSearchSubmitFallback: false for an empty recording', () => {
+  assert.strictEqual(needsSearchSubmitFallback([]), false);
 });

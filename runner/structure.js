@@ -6,7 +6,7 @@
 // so a run always returns *something* usable.
 const fs = require('fs');
 const path = require('path');
-const { normalizeResults } = require('./normalize');
+const { normalizeResults, normalizeSummary } = require('./normalize');
 
 // Minimal .env loader (no dependency): KEY=value lines, quotes stripped.
 function loadEnv(dir) {
@@ -128,6 +128,52 @@ function extractJsonArray(content) {
   }
 }
 
+// Parses the {items:[...]} object callDeepSeekCombined's prompt asks for,
+// where each item carries its own "type" ('card' | 'text' — see
+// normalizeResults). A model that ignores the object shape and replies with
+// a bare JSON array (the older prompt shape, or a model that just forgot)
+// still works — normalizeResults defaults a missing/unrecognized type to
+// 'card', exactly today's behavior — so this can only ever add a capability,
+// never regress a model that answers the old way.
+function extractJsonItems(content) {
+  const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const body = fenced ? fenced[1] : content;
+  const objStart = body.indexOf('{');
+  const arrStart = body.indexOf('[');
+  if (objStart !== -1 && (arrStart === -1 || objStart < arrStart)) {
+    const end = body.lastIndexOf('}');
+    if (end > objStart) {
+      try {
+        const parsed = JSON.parse(body.slice(objStart, end + 1));
+        if (parsed && Array.isArray(parsed.items)) return parsed.items;
+      } catch {
+        /* fall through to bare-array handling below */
+      }
+    }
+  }
+  return extractJsonArray(content);
+}
+
+// Pulls the optional {summary} object out of the same response
+// extractJsonItems reads — see buildCombinedExtractPrompt. Null when the
+// model omits it (a comparable listing has no single "answer" to write) or
+// replied with the legacy bare-array shape, which never carries a summary.
+function extractJsonSummary(content) {
+  const fenced = content.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const body = fenced ? fenced[1] : content;
+  const objStart = body.indexOf('{');
+  const arrStart = body.indexOf('[');
+  if (objStart === -1 || (arrStart !== -1 && arrStart < objStart)) return null;
+  const end = body.lastIndexOf('}');
+  if (end <= objStart) return null;
+  try {
+    const parsed = JSON.parse(body.slice(objStart, end + 1));
+    return parsed && typeof parsed.summary === 'object' ? parsed.summary : null;
+  } catch {
+    return null;
+  }
+}
+
 // Shared DeepSeek chat-completion call — every caller in this codebase wants
 // the same request shape and just varies the system/user prompt. Returns the
 // raw text content; each caller parses it however it needs (JSON array here,
@@ -137,7 +183,15 @@ async function chatJSON(systemPrompt, userPrompt, apiKey, opts = {}) {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
-      model: opts.model || 'deepseek-chat',
+      // DeepSeek retired 'deepseek-chat'; v4-pro/v4-flash are the current names
+      // (a 400 "supported API model names are deepseek-v4-pro or
+      // deepseek-v4-flash" is the symptom when this drifts). flash, not pro:
+      // measured live, a single ~28k-char extraction prompt (realistic size for
+      // the whole-page rescue) took pro >120s on its own -- longer than the
+      // entire server run timeout, which is exactly what caused live runs to
+      // time out after this was briefly set to pro. A run that finishes with
+      // flash's quality beats one that never finishes at all.
+      model: opts.model || 'deepseek-v4-flash',
       messages: [
         { role: 'system', content: systemPrompt },
         { role: 'user', content: userPrompt },
@@ -258,6 +312,68 @@ async function callDeepSeek(cards, apiKey, opts = {}) {
   return arr;
 }
 
+// Single-call replacement for classifySiteKind + callDeepSeek/
+// callDeepSeekInformational: the two-call path always paid for a full
+// classify round-trip THEN a full extract round-trip, sequentially — on real
+// scraped card sizes that's two multi-second network calls back to back for
+// something one call can decide and do at once. Folding the LISTING/
+// INFORMATIONAL judgment call into the same prompt that does the extraction
+// removes the whole first round-trip while keeping the same fallback schema
+// (name/subtitle/price/rating/image/url/metrics) either way — the model just
+// applies whichever extraction rule fits what it's looking at, silently.
+function buildCombinedExtractPrompt(cards, opts = {}) {
+  const { domain, values, notes } = opts;
+  const queryContext =
+    values && Object.keys(values).length ? `The user searched for: ${JSON.stringify(values)}.\n\n` : '';
+  return (
+    notesPrefix(notes) +
+    queryContext +
+    `The following are result items scraped from a search on ${domain || 'a website'}. For EACH item, ` +
+    'decide, silently, its own "type" — a page can mix both, so judge item by item rather than forcing ' +
+    'one shape on everything:\n' +
+    '- "card": a comparable item meant to be judged side by side against others, with its own real link — ' +
+    'a hotel, product, video, job. Requires a real url.\n' +
+    '- "text": a fact or row with no natural per-item link — a data-table row (stock ticker, exchange ' +
+    'rate, leaderboard entry), a fact from a biography/encyclopedia entry/news article/cast page. url may ' +
+    'be omitted when nothing real applies — do not invent one just to fill the field, and never fall back ' +
+    "to reusing the page's own URL for every item.\n" +
+    'Some comparable listings have NO real per-item link at all — e.g. flight search results, where each ' +
+    'row is picked via an in-page button/state change rather than its own URL. If an item has no genuine ' +
+    'url to give it, type it "text" even though it is one of several comparable options: never use "card" ' +
+    'with url left null or invented just because the item looks list-like. "text" items get deduped by ' +
+    'name, so when several linkless comparable rows would otherwise share the same label (e.g. two ' +
+    'flights on the same airline), give each a unique, distinguishing name (fold in the detail that tells ' +
+    'them apart, like departure time) rather than letting them collapse into one.\n\n' +
+    'Additionally: if this content is about a single topic rather than a set of comparable items to ' +
+    'browse (a stock/fact page, a biography, a status page — anything where the useful output is really ' +
+    'ONE answer, not a list to scroll through), also write a "summary" — a short, organized write-up like ' +
+    'a Wikipedia intro paragraph or an assistant\'s answer, not a dump of scraped fragments: {"headline": ' +
+    'a short title, "text": 1-3 plain-English sentences that actually answer what the user searched for, ' +
+    '"facts": an object of the key numbers/facts worth calling out (e.g. {"Lower bound": "175.60"})}. ' +
+    'Write "text" as a direct answer using whatever real facts are present — never mention, talk about, or ' +
+    'reference scraping, capturing, or extracting the page, and never speculate about what data was or was ' +
+    "not captured; just state the facts you do have. Omit \"summary\" (or leave it null) for a genuine " +
+    "comparable listing (hotels, videos, products) — those don't have one single answer to summarize.\n\n" +
+    'Return ONLY a JSON object (no prose) of the shape {"items": [...], "summary": {...} | null}. Each ' +
+    'item is an object with keys: type ("card" or "text"), name, subtitle, price (null unless a real price ' +
+    "applies), rating (null unless a real rating applies), image, url, and metrics (any other relevant " +
+    "facts as key/value pairs). Use the card's href for url and img for image where present.\n\n" +
+    JSON.stringify(cards, null, 2)
+  );
+}
+
+async function callDeepSeekCombined(cards, apiKey, opts = {}) {
+  const content = await chatJSON(
+    'You extract structured data from scraped web content and reply with JSON only.',
+    buildCombinedExtractPrompt(cards, opts),
+    apiKey,
+    opts
+  );
+  const items = extractJsonItems(content);
+  if (!items) throw new Error('DeepSeek returned no parseable JSON');
+  return { items, summary: extractJsonSummary(content) };
+}
+
 // Self-service fix loop: a user reports a problem with a completed run's
 // output ("no price shown", "missing amenities"). Re-extracts from that run's
 // raw cards with the complaint (and, if given, the earlier bad result) as
@@ -293,24 +409,29 @@ async function callDeepSeekFix(cards, complaint, priorResults, notes, apiKey, op
   return normalizeResults(arr);
 }
 
-// Structure raw cards → normalized rows. Returns { results, engine }.
+// Structure raw cards → normalized rows. Returns { results, engine, summary }.
+// Each row's own `type` ('card' | 'text', see normalizeResults) says how to
+// render it — the AI decides that per item; the heuristic fallback always
+// produces 'card' rows since it only knows the name/price/rating/url shape.
+// summary (see normalizeSummary) is a synthesized write-up for informational
+// content — null for a comparable listing or whenever the heuristic path runs
+// (it can't write prose, only parse fixed fields).
 async function structureResults(cards, opts = {}) {
   loadEnv(opts.envDir || process.cwd());
   const key = process.env.DEEPSEEK_API_KEY;
   let items;
   let engine;
+  let summary = null;
   // Heuristic is the default (free, no API). DeepSeek is opt-in via opts.ai and
   // only used when a key is present; it falls back to heuristic on failure.
+  // One combined call (see callDeepSeekCombined) replaces the old
+  // classify-then-extract pair — same fallback schema, half the round trips.
   if (opts.ai && key) {
     try {
-      const kind = await classifySiteKind({ domain: opts.domain, cards }, key, opts);
-      if (kind === 'informational') {
-        items = await callDeepSeekInformational(cards, opts.values, key, opts);
-        engine = 'deepseek-informational';
-      } else {
-        items = await callDeepSeek(cards, key, opts);
-        engine = 'deepseek';
-      }
+      const combined = await callDeepSeekCombined(cards, key, { ...opts, domain: opts.domain, values: opts.values });
+      items = combined.items;
+      summary = normalizeSummary(combined.summary);
+      engine = 'deepseek';
     } catch (e) {
       items = heuristicParse(cards);
       engine = `heuristic (deepseek failed: ${e.message})`;
@@ -319,13 +440,15 @@ async function structureResults(cards, opts = {}) {
     items = heuristicParse(cards);
     engine = opts.ai ? 'heuristic (no DEEPSEEK_API_KEY)' : 'heuristic';
   }
-  return { results: normalizeResults(items), engine };
+  return { results: normalizeResults(items), engine, summary };
 }
 
 module.exports = {
   structureResults,
   heuristicParse,
   extractJsonArray,
+  extractJsonItems,
+  extractJsonSummary,
   loadEnv,
   classifyLine,
   parseLines,
@@ -335,6 +458,8 @@ module.exports = {
   parseKind,
   buildInformationalPrompt,
   callDeepSeekInformational,
+  buildCombinedExtractPrompt,
+  callDeepSeekCombined,
   notesPrefix,
   buildFixPrompt,
   callDeepSeekFix,

@@ -148,16 +148,35 @@ $('create').addEventListener('click', async () => {
   try{ recording = JSON.parse($('recording').value); }
   catch(e){ msg.textContent='Recording is not valid JSON.'; msg.className='msg err'; return; }
   const scanning = $('scanForMissedFields').checked;
-  if(scanning){ msg.textContent = 'Creating (scanning for missed fields)…'; msg.className='msg'; }
-  const res = await fetch('/api/automations', {
-    method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({ name: $('name').value, recording, scanForMissedFields: scanning })
-  });
-  const data = await res.json();
-  if(!res.ok){ msg.textContent = data.error || 'Failed'; msg.className='msg err'; return; }
-  msg.textContent = 'Created ✓'; msg.className='msg ok';
-  $('name').value=''; $('recording').value=''; $('scanForMissedFields').checked=false;
-  loadList();
+  // Create runs several sequential AI calls server-side (formspec naming/
+  // filtering + optional scan) and can take 30-60s with no other signal --
+  // without a visible timer here the button looked dead and got rage-clicked
+  // into duplicate automations. Disable + tick so a slow response still reads
+  // as "working," not "broken."
+  $('create').disabled = true;
+  const startedAt = Date.now();
+  const tick = () => {
+    const s = Math.round((Date.now() - startedAt) / 1000);
+    msg.textContent = `Creating… ${s}s${scanning ? ' (scanning for missed fields)' : ''}`;
+    msg.className = 'msg';
+  };
+  tick();
+  const timer = setInterval(tick, 1000);
+  try{
+    const res = await fetch('/api/automations', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ name: $('name').value, recording, scanForMissedFields: scanning })
+    });
+    const data = await res.json();
+    if(!res.ok){ msg.textContent = data.error || 'Failed'; msg.className='msg err'; return; }
+    msg.textContent = 'Created ✓'; msg.className='msg ok';
+    $('name').value=''; $('recording').value=''; $('scanForMissedFields').checked=false;
+    loadList();
+  }catch(e){
+    msg.textContent = 'Failed: '+e.message; msg.className='msg err';
+  }finally{
+    clearInterval(timer); $('create').disabled = false;
+  }
 });
 
 loadList();

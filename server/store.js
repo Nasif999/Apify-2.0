@@ -108,7 +108,13 @@ async function scanWarningsFor(recording, wanted) {
 }
 
 async function createAutomation({ name, recording, scanForMissedFields: wantScan }) {
-  const list = load();
+  // Do the slow async work (DeepSeek formspec, headless scan) BEFORE touching
+  // the file. If we load() first and hold that snapshot across these awaits,
+  // any create/edit/run that saves during the multi-second window is silently
+  // clobbered when we write the stale list back — a lost-update race that
+  // orphaned automations (open tabs then hit "Not found" on run). Reading the
+  // list only once the awaits are done makes load→push→save a single
+  // synchronous critical section, which Node's single thread runs atomically.
   const { formspec, engine } = await buildFormSpec(recording);
   const scanWarnings = await scanWarningsFor(recording, wantScan);
   const automation = {
@@ -123,7 +129,9 @@ async function createAutomation({ name, recording, scanForMissedFields: wantScan
     price: quoteRate(recording).price,
     runs: [],
     extractionNotes: [],
+    fieldEdits: {},
   };
+  const list = load();
   list.push(automation);
   save(list);
   return automation;
@@ -179,6 +187,30 @@ function addExtractionNote(automationId, note) {
   return a.extractionNotes;
 }
 
+// Per-field UI overrides (hide / mark-as-filter / rename), applied on read by
+// applyFieldEdits (runner/fieldEdits.js). Kept off the canonical formspec so an
+// edit is always reversible and never touches the recording or the run path.
+// A shallow merge lets successive edits to the same field accumulate (e.g.
+// rename then make-filter) without clobbering earlier keys.
+function setFieldEdit(automationId, key, edit) {
+  const list = load();
+  const a = list.find((x) => x.id === automationId);
+  if (!a) return null;
+  a.fieldEdits = a.fieldEdits || {};
+  a.fieldEdits[key] = { ...(a.fieldEdits[key] || {}), ...edit };
+  save(list);
+  return a;
+}
+
+function clearFieldEdit(automationId, key) {
+  const list = load();
+  const a = list.find((x) => x.id === automationId);
+  if (!a || !a.fieldEdits) return a || null;
+  delete a.fieldEdits[key];
+  save(list);
+  return a;
+}
+
 function deleteAutomation(id) {
   const list = load();
   const next = list.filter((a) => a.id !== id);
@@ -195,6 +227,8 @@ module.exports = {
   addRun,
   getRun,
   addExtractionNote,
+  setFieldEdit,
+  clearFieldEdit,
   deleteAutomation,
   maskKey,
   isSuspiciousClassification,

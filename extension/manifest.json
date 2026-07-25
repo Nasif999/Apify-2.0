@@ -17,7 +17,7 @@
       "all_frames": false
     },
     {
-      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html"],
+      "matches": ["http://localhost:3000/dashboard.html", "http://127.0.0.1:3000/dashboard.html", "https://fast-regions-float.loca.lt/dashboard.html"],
       "js": ["handoff.js"],
       "run_at": "document_idle"
     }
